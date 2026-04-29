@@ -15,6 +15,8 @@ module.exports = {
         'test', // 테스트 추가
         'chore', // 빌드, 패키지 관리 등
         'ci', // CI/CD 설정 변경
+        'revert', // 이전 커밋 되돌리기
+        'build', // 빌드 관련 변경
       ],
     ],
     'type-case': [2, 'always', 'lower-case'],
