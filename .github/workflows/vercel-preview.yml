@@ -25,6 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    # PR 코멘트 작성을 위해 명시 권한 필요 (GITHUB_TOKEN 기본은 read-only)
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
