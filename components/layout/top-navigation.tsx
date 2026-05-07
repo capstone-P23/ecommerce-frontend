@@ -28,7 +28,7 @@ export function TopNavigation({ storeDomain }: Props) {
           href={`/consumer/${storeDomain}`}
           className="text-base font-semibold whitespace-nowrap"
         >
-          {storeDomain}
+          ecommerce
         </Link>
 
         <form
