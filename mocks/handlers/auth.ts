@@ -1,43 +1,26 @@
 import { http, HttpResponse } from 'msw';
 
-import { mockUsers } from '../fixtures/users';
-
-// [MEM-001, MEM-002] 인증
+/**
+ * 인증 관련 MSW 핸들러 — 백엔드 api-docs.json 기준으로 정렬.
+ *
+ * 백엔드 실제 endpoint:
+ *   POST /api/auth/refresh   - refresh token
+ *   POST /api/auth/logout    - logout
+ *
+ * Google OAuth 자체는 외부 redirect 기반이라 MSW 가 가로챌 수 없음.
+ * (브라우저가 backend 의 /oauth2/authorization/google 로 직접 이동)
+ *
+ * URL 패턴: '*' 로 origin 와일드카드 — 절대(http://localhost:8080/...)
+ *           / 상대(/api/...) 모두 매치.
+ */
 export const authHandlers = [
-  // POST /api/members/login
-  http.post('/api/members/login', async ({ request }) => {
-    const body = (await request.json()) as { email?: string };
-    const user = mockUsers.find((u) => u.email === body.email) ?? mockUsers[0];
-    return HttpResponse.json({ data: { user, token: 'mock-jwt-token' } });
+  // POST */api/auth/refresh
+  http.post('*/api/auth/refresh', () => {
+    return HttpResponse.json({ accessToken: 'mock-refreshed-jwt-token' });
   }),
 
-  // POST /api/members/signup
-  http.post('/api/members/signup', async ({ request }) => {
-    const body = (await request.json()) as {
-      email?: string;
-      name?: string;
-    };
-    return HttpResponse.json(
-      {
-        data: {
-          user: {
-            id: Date.now(),
-            email: body.email ?? 'new@user.com',
-            name: body.name ?? '신규 사용자',
-            role: 'consumer',
-            points: 0,
-            coupons: 0,
-          },
-        },
-      },
-      { status: 201 },
-    );
-  }),
-
-  // POST /api/members/social-login
-  http.post('/api/members/social-login', () => {
-    return HttpResponse.json({
-      data: { user: mockUsers[0], token: 'mock-social-jwt-token' },
-    });
+  // POST */api/auth/logout
+  http.post('*/api/auth/logout', () => {
+    return new HttpResponse(null, { status: 200 });
   }),
 ];

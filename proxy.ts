@@ -16,8 +16,12 @@ export function proxy(request: NextRequest) {
   const hostname = request.headers.get('host') ?? '';
   const { pathname } = request.nextUrl;
 
-  // 인증 페이지는 모든 호스트에서 동일 경로로 접근 가능
-  if (pathname === '/login' || pathname === '/signup') {
+  // 인증 페이지 / OAuth 콜백은 모든 호스트에서 동일 경로
+  if (
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname.startsWith('/auth/')
+  ) {
     return NextResponse.next();
   }
 

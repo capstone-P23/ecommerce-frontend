@@ -2,8 +2,21 @@ import { http, HttpResponse } from 'msw';
 
 import { mockProducts } from '../fixtures/products';
 
-// [MEM-004, INT-001~003] 마이페이지 - 혜택 / 좋아요 / 찜 / 최근 본 상품
+// [MEM-003, MEM-004, INT-001~003] 회원 정보 / 혜택 / 좋아요 / 찜 / 최근 본 상품
 export const memberHandlers = [
+  // GET */api/members/me — 백엔드 실제 endpoint (api-docs.json MemberResponse)
+  http.get('*/api/members/me', () => {
+    return HttpResponse.json({
+      id: 1,
+      email: 'demo@user.com',
+      emailVerified: true,
+      name: '데모 사용자',
+      picture: null,
+      locale: 'ko',
+      joinedAt: '2026-01-01T00:00:00Z',
+    });
+  }),
+
   // GET /api/users/benefits
   http.get('/api/users/benefits', () => {
     return HttpResponse.json({
