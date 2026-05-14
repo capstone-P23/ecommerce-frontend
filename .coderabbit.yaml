@@ -37,12 +37,17 @@ reviews:
     - '!components/ui/**' # shadcn CLI 자동 생성 primitives
     - '!public/mockServiceWorker.js' # `npx msw init` 자동 생성
     - '!api/api-docs.json' # 백엔드 OpenAPI 산출물 (FE 가 수정하지 않음)
-    # 리뷰 대상
+    # 리뷰 대상 — 소스
     - 'app/**'
     - 'components/**'
     - 'lib/**'
     - 'mocks/**'
     - 'proxy.ts'
+    # 리뷰 대상 — 설정 / 자동화 (워크플로 / CI / 리뷰 설정 변경도 검토)
+    - '.github/**'
+    - '.coderabbit.yaml'
+    - 'next.config.ts'
+    - 'eslint.config.mjs'
 
   path_instructions:
     - path: '**/*.{tsx,jsx}'
