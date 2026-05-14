@@ -14,6 +14,11 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    # CodeRabbit 은 기본적으로 default branch(main) 향 PR 만 자동 리뷰한다.
+    # 우리는 feature/* → dev 흐름이므로 dev 를 베이스 브랜치 목록에 추가한다.
+    # (main 은 default branch 라 별도 명시 없이도 항상 리뷰됨)
+    base_branches:
+      - 'dev'
     ignore_title_keywords:
       - 'WIP'
       - 'draft'
