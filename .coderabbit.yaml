@@ -1,0 +1,84 @@
+# .coderabbit.yaml — 프로젝트 root 위치
+# CodeRabbit AI 코드 리뷰 설정
+#
+# 이 프로젝트는 src/ 없이 root 에 app/ · components/ · lib/ · mocks/ 를 배치한다
+# (Next.js 16 App Router). 예시 템플릿의 src/** 경로는 우리 구조에 맞춰 리매핑됨.
+
+language: 'ko-KR'
+tone_instructions: '친절하되 실용적으로, 사용자 경험/성능/유지보수성 관점에서 개선안을 제시한다. Conventional Commits 와 Phase 단위 PR 컨벤션을 따르는 팀임을 감안한다.'
+
+reviews:
+  profile: 'chill'
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - 'WIP'
+      - 'draft'
+
+  path_filters:
+    # 빌드 산출물 / 의존성
+    - '!node_modules/**'
+    - '!.next/**'
+    - '!.vercel/**'
+    - '!build/**'
+    - '!dist/**'
+    - '!coverage/**'
+    - '!**/*.lock'
+    - '!package-lock.json'
+    # 자동 생성 / 서드파티 산출물 (리뷰 대상 아님)
+    - '!components/ui/**' # shadcn CLI 자동 생성 primitives
+    - '!public/mockServiceWorker.js' # `npx msw init` 자동 생성
+    - '!api/api-docs.json' # 백엔드 OpenAPI 산출물 (FE 가 수정하지 않음)
+    # 리뷰 대상
+    - 'app/**'
+    - 'components/**'
+    - 'lib/**'
+    - 'mocks/**'
+    - 'proxy.ts'
+
+  path_instructions:
+    - path: '**/*.{tsx,jsx}'
+      instructions: |
+        - 컴포넌트 책임이 과도하게 커지지 않았는지 확인한다.
+        - 불필요한 re-render, memoization 필요 여부, expensive computation을 확인한다.
+        - loading, empty, error state가 빠지지 않았는지 확인한다.
+        - 접근성: aria-label, semantic tag, keyboard navigation, focus 처리를 확인한다.
+        - Server Component / Client Component 경계가 적절한지, 'use client' 가 꼭 필요한 곳에만 있는지 확인한다.
+        - 동적 라우트 페이지는 params 가 Promise 타입이며 await 되는지 확인한다 (Next.js 16).
+
+    - path: 'lib/**'
+      instructions: |
+        - TanStack Query: queryKey 가 팩토리 패턴을 따르는지, staleTime / enabled 설정이 합리적인지 확인한다.
+        - useEffect dependency 누락/과다, stale closure, race condition, cleanup 누락을 지적한다.
+        - 서버 상태(TanStack Query)와 클라이언트 상태(Zustand)가 혼재되어 복잡해지지 않았는지 확인한다.
+        - Zustand store 의 persist 대상이 민감 정보를 과도하게 노출하지 않는지 확인한다.
+
+    - path: 'lib/api/**'
+      instructions: |
+        - API error handling, retry, timeout, 401 / auth error 처리 흐름을 확인한다.
+        - 백엔드 응답 스펙(api/api-docs.json) 변경에 취약하지 않은지 확인한다.
+        - 사용자에게 노출되는 에러 메시지가 적절한지 확인한다.
+        - Bearer 토큰 주입이 apiFetch 를 일관되게 거치는지 확인한다.
+
+    - path: 'components/**'
+      instructions: |
+        - 디자인 시스템 / 공통 컴포넌트(components/ui) 재사용 가능성을 확인한다.
+        - props naming, controlled / uncontrolled 패턴, variant 확장성을 확인한다.
+        - 모바일 / 반응형 레이아웃 깨짐 가능성을 확인한다.
+        - shadcn 은 Base UI 기반이므로 asChild 가 아니라 render={<Element/>} 패턴을 쓰는지 확인한다.
+        - 라이트 테마 단일 운영 정책 — 다크 전용 클래스(dark:)를 새로 추가하지 않았는지 확인한다.
+
+    - path: 'mocks/**'
+      instructions: |
+        - MSW 핸들러의 endpoint · 응답 스키마가 백엔드 명세(api/api-docs.json)와 일치하는지 확인한다.
+        - 백엔드에 아직 없는 endpoint 를 mock 한다면 주석으로 명시되어 있는지 확인한다.
+        - origin 와일드카드('*') 패턴이 유지되어 절대 / 상대 URL 모두 매치되는지 확인한다.
+
+    - path: '**/*.{spec,test}.*'
+      instructions: |
+        - 사용자 행동 중심 테스트인지 확인한다.
+        - loading / error / empty state 테스트가 있는지 확인한다.
+        - 구현 세부사항보다 접근 가능한 UI 결과를 검증하는지 확인한다.
