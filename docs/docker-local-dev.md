@@ -2,7 +2,7 @@
 
 백엔드와 MySQL 을 Docker 컨테이너로 띄우고, 프론트엔드는 호스트에서 `npm run dev` 로 실행하는 구성.
 
-```
+```text
 docker-compose
 ├─ mysql:3306      → ecommerce-mysql
 └─ app:8080        → ecommerce-backend  (kwondh1126/ecommerce-be)
