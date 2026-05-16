@@ -48,6 +48,10 @@ reviews:
     - '.coderabbit.yaml'
     - 'next.config.ts'
     - 'eslint.config.mjs'
+    - 'docker-compose*.yml'
+    - '.env.example'
+    # 리뷰 대상 — 문서
+    - 'docs/**'
 
   path_instructions:
     - path: '**/*.{tsx,jsx}'

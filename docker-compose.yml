@@ -1,0 +1,56 @@
+# 로컬 개발용 백엔드 + DB 컴포즈.
+# - 프론트엔드는 호스트에서 `npm run dev` 로 실행 (compose 에 미포함)
+# - 모든 secret 은 .env (gitignored) 에서 보간. .env.example 참고.
+# - 실행: `docker compose up -d`
+
+services:
+  # MySQL 8 — BE 데이터 저장소
+  mysql:
+    image: mysql:8.0
+    container_name: ecommerce-mysql
+    environment:
+      # `${VAR:?...}` = 미설정 시 compose 가 실행 자체를 거절 (사전 차단)
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD 누락 — .env 확인}
+      MYSQL_DATABASE: ${DB_NAME:-ecommerce_db}
+      MYSQL_USER: ${DB_USERNAME:-shop_admin}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 누락 — .env 확인}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 백엔드 — BE 팀이 Docker Hub 에 빌드한 이미지
+  app:
+    image: kwondh1126/ecommerce-be:latest
+    container_name: ecommerce-backend
+    ports:
+      - '8080:8080'
+    environment:
+      # DB 호스트는 compose 내부 네트워크의 'mysql' (host 머신의 localhost 아님)
+      DB_URL: jdbc:mysql://mysql:3306/${DB_NAME:-ecommerce_db}?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
+      DB_USERNAME: ${DB_USERNAME:-shop_admin}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD 누락 — .env 확인}
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      # JWT 서명 키 (BE 토큰 발급/검증)
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET 누락 — .env 확인}
+      # OAuth — Google (필수)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?GOOGLE_CLIENT_ID 누락 — .env 확인}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?GOOGLE_CLIENT_SECRET 누락 — .env 확인}
+      # OAuth — Kakao / Naver (BE 가 dev 단계에서는 placeholder 사용)
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      # BE 의 docker 프로파일 활성화
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
