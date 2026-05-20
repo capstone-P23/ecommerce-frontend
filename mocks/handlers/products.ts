@@ -1,49 +1,78 @@
 import { http, HttpResponse } from 'msw';
 
-import { mockCategories, mockProducts } from '../fixtures/products';
+import type { PageResponse, ProductSummary } from '@/types/api';
+import { mockProductDetails, mockProductSummaries } from '../fixtures/products';
 
-// [PRD-001~004] 소비자 상품
+/**
+ * 상품 핸들러 — 백엔드 api-docs.json 기준 정렬.
+ *
+ *   GET /api/products?categoryId=&keyword=&page=&size=&sort=
+ *     → PageResponse<ProductSummary>
+ *   GET /api/products/{id}
+ *     → ProductDetail
+ *
+ * 응답 envelope 는 백엔드 그대로 (data wrapper 없음).
+ * origin 와일드카드 '*' — 절대(localhost:8080)/상대(/api/...) 모두 매치.
+ */
+
+const DEFAULT_PAGE = 0;
+const DEFAULT_SIZE = 20;
+
+const buildPage = (
+  items: ProductSummary[],
+  page: number,
+  size: number,
+): PageResponse<ProductSummary> => {
+  const start = page * size;
+  const slice = items.slice(start, start + size);
+  const totalPages = Math.max(1, Math.ceil(items.length / size));
+
+  return {
+    content: slice,
+    totalElements: items.length,
+    totalPages,
+    number: page,
+    size,
+    first: page === 0,
+    last: page >= totalPages - 1,
+    numberOfElements: slice.length,
+    empty: slice.length === 0,
+  };
+};
+
 export const productHandlers = [
-  // GET /api/products/search?keyword=
-  http.get('/api/products/search', ({ request }) => {
+  http.get('*/api/products', ({ request }) => {
     const url = new URL(request.url);
-    const keyword = url.searchParams.get('keyword') ?? '';
-    const filtered = keyword
-      ? mockProducts.filter((p) => p.name.includes(keyword))
-      : mockProducts;
-    return HttpResponse.json({ data: filtered });
-  }),
+    const keyword = url.searchParams.get('keyword')?.trim() ?? '';
+    const categoryIdParam = url.searchParams.get('categoryId');
+    const page = Number(url.searchParams.get('page') ?? DEFAULT_PAGE);
+    const size = Number(url.searchParams.get('size') ?? DEFAULT_SIZE);
 
-  // GET /api/products/recommend?userId=
-  http.get('/api/products/recommend', () => {
-    // Phase 5/8 에서 실제 추천 로직 (현재는 첫 5개)
-    return HttpResponse.json({ data: mockProducts.slice(0, 5) });
-  }),
-
-  // GET /api/products/category/{id}
-  http.get('/api/products/category/:id', ({ params }) => {
-    const id = Number(params.id);
-    const filtered = mockProducts.filter((p) => p.categoryId === id);
-    return HttpResponse.json({
-      data: { category: mockCategories.find((c) => c.id === id), products: filtered },
+    const filtered = mockProductSummaries.filter((product) => {
+      const matchesKeyword = keyword.length === 0 || product.name.includes(keyword);
+      const matchesCategory =
+        !categoryIdParam ||
+        product.categoryName ===
+          // categoryId → category name (mock 내부 매핑)
+          (
+            {
+              '1': '식품',
+              '2': '음료',
+              '3': '주방용품',
+            } as Record<string, string>
+          )[categoryIdParam];
+      return matchesKeyword && matchesCategory;
     });
+
+    return HttpResponse.json(buildPage(filtered, page, size));
   }),
 
-  // GET /api/products/{productId}
-  http.get('/api/products/:productId', ({ params }) => {
-    const id = Number(params.productId);
-    const product = mockProducts.find((p) => p.id === id);
+  http.get('*/api/products/:id', ({ params }) => {
+    const id = Number(params.id);
+    const product = mockProductDetails.find((p) => p.id === id);
     if (!product) {
       return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
     }
-    return HttpResponse.json({ data: product });
-  }),
-
-  // GET /api/products/compare?ids=1,2,3
-  http.get('/api/products/compare', ({ request }) => {
-    const url = new URL(request.url);
-    const ids = url.searchParams.get('ids')?.split(',').map(Number) ?? [];
-    const result = mockProducts.filter((p) => ids.includes(p.id));
-    return HttpResponse.json({ data: result });
+    return HttpResponse.json(product);
   }),
 ];
