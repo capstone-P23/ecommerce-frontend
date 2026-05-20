@@ -2,6 +2,7 @@
 import { adminHandlers } from './admin';
 import { aiHandlers } from './ai';
 import { authHandlers } from './auth';
+import { cartHandlers } from './cart';
 import { categoryHandlers } from './categories';
 import { memberHandlers } from './members';
 import { orderHandlers } from './orders';
@@ -14,6 +15,7 @@ export const handlers = [
   ...authHandlers,
   ...productHandlers,
   ...categoryHandlers,
+  ...cartHandlers,
   ...orderHandlers,
   ...memberHandlers,
   ...reviewHandlers,
