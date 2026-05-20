@@ -82,3 +82,41 @@ export type ProductDetail = {
   skus: Sku[];
   createdAt: string;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Cart
+// ─────────────────────────────────────────────────────────────
+
+export type CartItem = {
+  itemId: number;
+  productId: number;
+  productName: string;
+  productImageUrl: string;
+  currentPrice: number;
+  currency: string;
+  quantity: number;
+  subtotal: number;
+  /** 재고/상태 변동으로 더 이상 살 수 없는 항목 */
+  available: boolean;
+};
+
+export type Cart = {
+  cartId: number;
+  items: CartItem[];
+  totalAmount: number;
+  currency: string;
+  itemCount: number;
+  totalQuantity: number;
+};
+
+export type AddCartItemRequest = {
+  productId: number;
+  skuId: number;
+  /** minimum: 1 (OpenAPI 제약) */
+  quantity: number;
+};
+
+export type UpdateCartItemRequest = {
+  /** minimum: 1 (OpenAPI 제약) — 0 으로 만들고 싶으면 DELETE 사용 */
+  quantity: number;
+};
