@@ -1,17 +1,12 @@
-// [PRD-002, PRD-003] 홈 — AI 추천 피드 / 카테고리 탐색
+import { ConsumerHomeView } from '@/components/consumer/consumer-home-view';
+
+// [PRD-002, PRD-003] 홈 — 카테고리 + 상품 첫 페이지 미리보기
+// (AI 추천은 백엔드 미구현 — 일반 리스트로 대체)
 export default async function ConsumerHomePage({
   params,
 }: {
   params: Promise<{ storeDomain: string }>;
 }) {
   const { storeDomain } = await params;
-
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">{storeDomain} 스토어</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 5): AI 추천 피드 · 카테고리 그리드
-      </p>
-    </div>
-  );
+  return <ConsumerHomeView storeDomain={storeDomain} />;
 }
