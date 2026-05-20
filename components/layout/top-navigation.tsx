@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent } from 'react';
 import { Search, ShoppingCart, User, LogIn } from 'lucide-react';
 
@@ -16,9 +16,10 @@ type Props = {
 const KEYWORD_FIELD_NAME = 'keyword';
 
 /**
- * 소비자 영역 상단 GNB.
+ * 소비자 영역 상단 GNB. 사이트 전체의 유일한 검색 입력 (single source).
  * - 좌측: 스토어 브랜드
  * - 중앙: 검색바 → submit 시 /consumer/{storeDomain}/products?keyword= 로 이동
+ *         URL 의 현재 keyword 를 인식해 input 에 미리 채워줌 (key + defaultValue)
  * - 우측: 장바구니 / 마이페이지 / 로그인
  *
  * Note: <a> 를 <button> 안에 넣는 것은 HTML 비표준이라 Button 컴포넌트 대신
@@ -26,6 +27,9 @@ const KEYWORD_FIELD_NAME = 'keyword';
  */
 export function TopNavigation({ storeDomain }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // URL 이 바뀌면 input 이 remount 되어 defaultValue 가 재적용 (key 패턴)
+  const currentKeyword = searchParams.get(KEYWORD_FIELD_NAME) ?? '';
 
   const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,8 +59,10 @@ export function TopNavigation({ storeDomain }: Props) {
             aria-hidden="true"
           />
           <Input
+            key={currentKeyword}
             type="search"
             name={KEYWORD_FIELD_NAME}
+            defaultValue={currentKeyword}
             placeholder="상품 검색"
             className="pl-9"
             aria-label="상품 검색"
