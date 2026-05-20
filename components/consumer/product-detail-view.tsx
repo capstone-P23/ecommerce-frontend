@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useProductDetail } from '@/lib/queries/products';
 import { formatPrice } from '@/lib/format';
 
+import { AddToCartButton } from './add-to-cart-button';
 import { ComingSoonSection } from './coming-soon-section';
 import { ProductStatusBadge } from './product-status-badge';
 
@@ -57,17 +56,8 @@ export function ProductDetailView({ productId, storeDomain }: Props) {
             재고: {product.totalStock.toLocaleString()}개
           </p>
 
-          {/* 장바구니 담기는 Phase 5b 에서 활성화 */}
-          <Button
-            type="button"
-            size="lg"
-            disabled
-            className="w-full"
-            aria-disabled="true"
-          >
-            <ShoppingCart className="size-4" />
-            장바구니 담기 (Phase 5b 예정)
-          </Button>
+          <AddToCartButton product={product} />
+
           {!isAvailable && (
             <p className="text-xs text-destructive">현재 구매할 수 없는 상품입니다.</p>
           )}

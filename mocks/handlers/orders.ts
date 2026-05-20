@@ -3,31 +3,10 @@ import { http, HttpResponse } from 'msw';
 import { mockOrders } from '../fixtures/orders';
 import { mockProducts } from '../fixtures/products';
 
-// [ORD-001~004, PAY-001~002] 장바구니 / 주문 / 결제
+// [ORD-002~004, PAY-001~002] 주문 / 결제
+// cart 핸들러는 phase 5b 에서 mocks/handlers/cart.ts 로 분리됨 (백엔드 스키마 정렬).
+// 아래 주문 관련 핸들러는 phase 5c 에서 백엔드 명세로 재정렬 예정.
 export const orderHandlers = [
-  // GET /api/cart
-  http.get('/api/cart', () => {
-    return HttpResponse.json({
-      data: {
-        items: [
-          { productId: 1, quantity: 2 },
-          { productId: 5, quantity: 1 },
-        ],
-      },
-    });
-  }),
-
-  // POST /api/cart
-  http.post('/api/cart', async ({ request }) => {
-    const body = (await request.json()) as { productId: number; quantity: number };
-    return HttpResponse.json({ data: { added: body } }, { status: 201 });
-  }),
-
-  // DELETE /api/cart/{itemId}
-  http.delete('/api/cart/:itemId', ({ params }) => {
-    return HttpResponse.json({ data: { removedItemId: Number(params.itemId) } });
-  }),
-
   // POST /api/orders
   http.post('/api/orders', async ({ request }) => {
     const body = (await request.json()) as { productIds: number[] };
