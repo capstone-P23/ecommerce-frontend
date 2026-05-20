@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
 
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -52,12 +53,16 @@ export function ConsumerHomeView({ storeDomain }: Props) {
           hrefFor={productHref}
           isLoading={productsQuery.isLoading}
         />
-        <div className="flex justify-center">
+        <div className="flex justify-center p-2">
           <Link
             href={`/consumer/${storeDomain}/products`}
-            className={cn(buttonVariants({ variant: 'outline' }))}
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'flex items-center px-2',
+            )}
           >
-            모든 상품 보기 →
+            모든 상품 보기
+            <ArrowRight />
           </Link>
         </div>
       </section>
