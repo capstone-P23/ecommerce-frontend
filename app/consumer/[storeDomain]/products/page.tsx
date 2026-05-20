@@ -1,11 +1,11 @@
-// [PRD-001] 상품 검색
-export default function ConsumerProductsPage() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">상품 검색</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 5): 검색바 + 필터 + ProductCard 그리드
-      </p>
-    </div>
-  );
+import { ProductListView } from '@/components/consumer/product-list-view';
+
+// [PRD-001, PRD-003] 상품 검색 / 카테고리 필터 / 페이지네이션
+export default async function ConsumerProductsPage({
+  params,
+}: {
+  params: Promise<{ storeDomain: string }>;
+}) {
+  const { storeDomain } = await params;
+  return <ProductListView storeDomain={storeDomain} />;
 }

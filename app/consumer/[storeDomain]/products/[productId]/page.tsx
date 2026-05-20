@@ -1,18 +1,18 @@
-// [PRD-004, REV-001, QNA-001] 상품 상세 (리뷰, Q&A 포함)
+import { notFound } from 'next/navigation';
+
+import { ProductDetailView } from '@/components/consumer/product-detail-view';
+
+// [PRD-004] 상품 상세 — 리뷰/Q&A 는 백엔드 미구현, ComingSoonSection 으로 표시
 export default async function ConsumerProductDetailPage({
   params,
 }: {
   params: Promise<{ storeDomain: string; productId: string }>;
 }) {
   const { storeDomain, productId } = await params;
+  const numericId = Number(productId);
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    notFound();
+  }
 
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">상품 #{productId}</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 5): ProductGallery · 옵션 선택 · 좋아요/찜 · ReviewSection · QnASection
-        ({storeDomain})
-      </p>
-    </div>
-  );
+  return <ProductDetailView productId={numericId} storeDomain={storeDomain} />;
 }
