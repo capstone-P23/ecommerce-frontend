@@ -1,11 +1,6 @@
-// [SEL-STK-002] 발주서 작성
+import { StockOrderView } from '@/components/seller/stock-order-view';
+
+// [SEL-STK-002] 발주서 목록 + 신규 발주 + 입고 확정
 export default function SellerStockOrderPage() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">발주서 작성</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 6): 발주서 폼 (RHF + Zod)
-      </p>
-    </div>
-  );
+  return <StockOrderView />;
 }
