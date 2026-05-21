@@ -120,3 +120,63 @@ export type UpdateCartItemRequest = {
   /** minimum: 1 (OpenAPI 제약) — 0 으로 만들고 싶으면 DELETE 사용 */
   quantity: number;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Order
+// ─────────────────────────────────────────────────────────────
+
+export type OrderStatus = 'PENDING' | 'CANCELLED';
+
+/** GET /api/orders/me 의 목록 원소 */
+export type Order = {
+  orderNumber: string;
+  status: OrderStatus;
+  totalAmount: number;
+  currency: string;
+  itemCount: number;
+  createdAt: string;
+};
+
+export type OrderItem = {
+  productId: number;
+  productName: string;
+  priceAmount: number;
+  currency: string;
+  productImageUrl: string;
+  quantity: number;
+  subtotal: number;
+};
+
+export type DeliveryInfo = {
+  receiverName: string;
+  receiverPhone: string;
+  zipCode: string;
+  addressLine1: string;
+  addressLine2?: string;
+  memo?: string;
+};
+
+export type OrderDetail = {
+  orderNumber: string;
+  status: OrderStatus;
+  totalAmount: number;
+  currency: string;
+  items: OrderItem[];
+  delivery: DeliveryInfo;
+  createdAt: string;
+  cancelledAt?: string;
+};
+
+/** POST /api/orders/me 요청의 items 원소 */
+export type OrderItemRequest = {
+  productId: number;
+  skuId: number;
+  quantity: number;
+};
+
+export type CreateOrderRequest = {
+  items: OrderItemRequest[];
+  delivery: DeliveryInfo;
+  guestEmail?: string;
+  guestPhone?: string;
+};
