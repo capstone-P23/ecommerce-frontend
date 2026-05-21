@@ -10,6 +10,7 @@ import { productHandlers } from './products';
 import { qnaHandlers } from './qna';
 import { reviewHandlers } from './reviews';
 import { sellerHandlers } from './seller';
+import { sellerMockHandlers } from './seller-mock';
 
 export const handlers = [
   ...authHandlers,
@@ -22,5 +23,6 @@ export const handlers = [
   ...qnaHandlers,
   ...aiHandlers,
   ...sellerHandlers,
+  ...sellerMockHandlers,
   ...adminHandlers,
 ];
