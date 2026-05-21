@@ -180,3 +180,178 @@ export type CreateOrderRequest = {
   guestEmail?: string;
   guestPhone?: string;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Seller — Purchase Order (발주)
+// ─────────────────────────────────────────────────────────────
+
+export type PurchaseOrderStatus = 'REQUESTED' | 'RECEIVED' | 'CANCELLED';
+
+/** GET /api/seller/purchase-orders 목록 원소 */
+export type PurchaseOrderListItem = {
+  purchaseOrderId: number;
+  purchaseOrderNumber: string;
+  skuId: number;
+  quantity: number;
+  supplierName: string;
+  expectedAt: string; // YYYY-MM-DD
+  status: PurchaseOrderStatus;
+  createdAt: string;
+};
+
+/** POST /api/seller/purchase-orders 응답 (id + number 만) */
+export type PurchaseOrderRef = {
+  purchaseOrderId: number;
+  purchaseOrderNumber: string;
+};
+
+export type CreatePurchaseOrderRequest = {
+  skuId: number;
+  quantity: number;
+  supplierName: string;
+  supplierContact?: string;
+  expectedAt: string; // YYYY-MM-DD
+};
+
+// ─────────────────────────────────────────────────────────────
+// Seller — Stock (입고)
+// ─────────────────────────────────────────────────────────────
+
+export type ReceiveStockRequest = {
+  purchaseOrderId: number;
+  receivedQuantity?: number; // 미지정 시 PO quantity 그대로 (백엔드 규칙 가정)
+};
+
+export type ReceiveStockResponse = {
+  purchaseOrderId: number;
+  skuId: number;
+  receivedQuantity: number;
+  currentStock: number;
+  status: PurchaseOrderStatus;
+};
+
+export type ReceiveAdjustRequest = {
+  receivedQuantity?: number;
+  reason: string;
+};
+
+export type ReceiveAdjustResponse = {
+  receiveHistoryId: number;
+  skuId: number;
+  originalQuantity: number;
+  adjustedQuantity: number;
+  currentStock: number;
+  reason: string;
+};
+
+export type ReceiveCancelResponse = {
+  receiveHistoryId: number;
+  skuId: number;
+  cancelledQuantity: number;
+  currentStock: number;
+  purchaseOrderStatus: PurchaseOrderStatus;
+};
+
+export type ReceiveHistory = {
+  stockHistoryId: number;
+  skuId: number;
+  purchaseOrderId: number;
+  receivedQuantity: number;
+  stockAfter: number;
+  createdAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Seller — mock-only (백엔드 endpoint 미정, phase 6b)
+// 백엔드가 정식 endpoint 를 추가하면 이 섹션을 정렬 후 mock 제거.
+// ─────────────────────────────────────────────────────────────
+
+export type SellerStats = {
+  revenueToday: number;
+  ordersToday: number;
+  stockAlerts: number;
+  pendingShipments: number;
+  currency: string;
+};
+
+export type SellerMember = {
+  memberId: number;
+  name: string;
+  email: string;
+  joinedAt: string;
+  totalOrders: number;
+  totalSpent: number;
+  currency: string;
+};
+
+export type SellerProductStatus = 'ACTIVE' | 'SOLD_OUT' | 'DISCONTINUED';
+
+export type SellerProduct = {
+  id: number;
+  name: string;
+  categoryName: string;
+  price: number;
+  currency: string;
+  totalStock: number;
+  status: SellerProductStatus;
+};
+
+export type SellerProductOption = {
+  optionId: number;
+  productId: number;
+  name: string;
+  value: string;
+  stock: number;
+  priceDelta: number;
+};
+
+export type SellerOrderStatus =
+  | 'PAID'
+  | 'PREPARING'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+export type SellerOrderListItem = {
+  orderNumber: string;
+  customerName: string;
+  itemCount: number;
+  totalAmount: number;
+  currency: string;
+  status: SellerOrderStatus;
+  trackingNumber?: string;
+  createdAt: string;
+};
+
+export type SellerOrderDetail = SellerOrderListItem & {
+  items: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    priceAmount: number;
+    subtotal: number;
+  }>;
+  receiverName: string;
+  receiverPhone: string;
+  address: string;
+};
+
+export type SellerSettlement = {
+  period: string; // YYYY-MM
+  grossSales: number;
+  fee: number;
+  payout: number;
+  currency: string;
+  status: 'PENDING' | 'COMPLETED';
+  settledAt?: string;
+};
+
+export type SellerInquiry = {
+  inquiryId: number;
+  subject: string;
+  customerName: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
+  createdAt: string;
+  body: string;
+  answer?: string;
+};

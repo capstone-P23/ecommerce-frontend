@@ -1,11 +1,6 @@
-// [SEL-MEM-001] 회원 관리
+import { SellerMembersView } from '@/components/seller/seller-members-view';
+
+// [SEL-MEM-001] 회원 관리 (mock)
 export default function SellerMembersPage() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">회원 관리</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 6): 회원 DataTable
-      </p>
-    </div>
-  );
+  return <SellerMembersView />;
 }

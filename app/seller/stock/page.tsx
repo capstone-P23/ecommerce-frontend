@@ -1,11 +1,6 @@
-// [SEL-STK-001] 재고 현황
+import { StockView } from '@/components/seller/stock-view';
+
+// [SEL-STK-001] 입고 이력 + 조정 / 취소
 export default function SellerStockPage() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold">재고 현황</h1>
-      <p className="text-sm text-muted-foreground">
-        TODO (Phase 6): StockTable + 발주 트리거
-      </p>
-    </div>
-  );
+  return <StockView />;
 }
