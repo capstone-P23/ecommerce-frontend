@@ -95,10 +95,13 @@ export function CartView({ storeDomain }: Props) {
 
       <aside className="space-y-3">
         <CartSummary cart={cart} />
-        <Button type="button" size="lg" disabled className="w-full">
+        <Link
+          href={`/consumer/${storeDomain}/checkout`}
+          className={cn(buttonVariants({ size: 'lg' }), 'w-full')}
+        >
           <ShoppingCart className="size-4" />
-          주문하기 (Phase 5c 예정)
-        </Button>
+          주문하기
+        </Link>
       </aside>
     </div>
   );
