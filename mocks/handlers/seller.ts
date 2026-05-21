@@ -1,133 +1,143 @@
 import { http, HttpResponse } from 'msw';
 
-import { mockOrders } from '../fixtures/orders';
-import { mockProducts } from '../fixtures/products';
-import { mockUsers } from '../fixtures/users';
+import type {
+  CreatePurchaseOrderRequest,
+  PageResponse,
+  PurchaseOrderListItem,
+  PurchaseOrderStatus,
+  ReceiveAdjustRequest,
+  ReceiveAdjustResponse,
+  ReceiveCancelResponse,
+  ReceiveHistory,
+  ReceiveStockRequest,
+  ReceiveStockResponse,
+} from '@/types/api';
 
-// [SEL-*] 판매자
+import {
+  adjustReceive,
+  cancelReceive,
+  createPurchaseOrder,
+  receiveStock,
+  snapshotPurchaseOrders,
+  snapshotReceiveHistories,
+} from '../fixtures/purchase-orders';
+
+/**
+ * 판매자 핸들러 — api-docs.json 의 실제 endpoint 6개에 정렬.
+ *
+ *   GET   *​/api/seller/purchase-orders                  → PageResponse<PurchaseOrderListItem>
+ *   POST  *​/api/seller/purchase-orders                  → PurchaseOrderRef
+ *   GET   *​/api/seller/stocks/receive-history           → PageResponse<ReceiveHistory>
+ *   PATCH *​/api/seller/stocks/receive                   → ReceiveStockResponse
+ *   PATCH *​/api/seller/stocks/receive/{id}              → ReceiveAdjustResponse
+ *   PATCH *​/api/seller/stocks/receive/{id}/cancel       → ReceiveCancelResponse
+ *
+ * Dashboard / 회원 / 상품 / 주문 / 정산 / CS 등 mock-only 영역은
+ * phase 6b 에서 별도 핸들러 파일로 추가 예정 (현재 endpoint 미정).
+ */
+
+const DEFAULT_PAGE = 0;
+const DEFAULT_SIZE = 20;
+
+const buildPage = <T>(items: T[], page: number, size: number): PageResponse<T> => {
+  const start = page * size;
+  const slice = items.slice(start, start + size);
+  const totalPages = Math.max(1, Math.ceil(items.length / size));
+  return {
+    content: slice,
+    totalElements: items.length,
+    totalPages,
+    number: page,
+    size,
+    first: page === 0,
+    last: page >= totalPages - 1,
+    numberOfElements: slice.length,
+    empty: slice.length === 0,
+  };
+};
+
 export const sellerHandlers = [
-  // GET /api/seller/stats
-  http.get('/api/seller/stats', () => {
-    return HttpResponse.json({
-      data: {
-        revenueToday: 1230000,
-        ordersToday: 24,
-        stockAlerts: 3,
-        pendingShipments: 12,
-      },
-    });
+  http.get('*/api/seller/purchase-orders', ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status') as PurchaseOrderStatus | null;
+    const page = Number(url.searchParams.get('page') ?? DEFAULT_PAGE);
+    const size = Number(url.searchParams.get('size') ?? DEFAULT_SIZE);
+
+    const all: PurchaseOrderListItem[] = snapshotPurchaseOrders();
+    const filtered = status ? all.filter((o) => o.status === status) : all;
+    return HttpResponse.json(buildPage(filtered, page, size));
   }),
 
-  // GET /api/seller/members
-  http.get('/api/seller/members', () => {
-    return HttpResponse.json({ data: mockUsers.filter((u) => u.role === 'consumer') });
+  http.post('*/api/seller/purchase-orders', async ({ request }) => {
+    const body = (await request.json()) as CreatePurchaseOrderRequest;
+    if (!body?.skuId || !body?.quantity || !body?.supplierName || !body?.expectedAt) {
+      return HttpResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    const ref = createPurchaseOrder(body);
+    return HttpResponse.json(ref, { status: 201 });
   }),
 
-  // GET /api/seller/products
-  http.get('/api/seller/products', () => {
-    return HttpResponse.json({ data: mockProducts });
+  http.get('*/api/seller/stocks/receive-history', ({ request }) => {
+    const url = new URL(request.url);
+    const skuIdParam = url.searchParams.get('skuId');
+    const page = Number(url.searchParams.get('page') ?? DEFAULT_PAGE);
+    const size = Number(url.searchParams.get('size') ?? DEFAULT_SIZE);
+
+    const all: ReceiveHistory[] = snapshotReceiveHistories();
+    const filtered = skuIdParam
+      ? all.filter((h) => h.skuId === Number(skuIdParam))
+      : all;
+    return HttpResponse.json(buildPage(filtered, page, size));
   }),
 
-  // POST /api/seller/products
-  http.post('/api/seller/products', async ({ request }) => {
-    const body = (await request.json()) as Partial<(typeof mockProducts)[number]>;
-    return HttpResponse.json(
-      { data: { id: Date.now(), ...body } },
-      { status: 201 },
-    );
+  http.patch('*/api/seller/stocks/receive', async ({ request }) => {
+    const body = (await request.json()) as ReceiveStockRequest;
+    const result = receiveStock(body.purchaseOrderId, body.receivedQuantity);
+    if (!result) {
+      return HttpResponse.json({ error: 'Purchase order not found' }, { status: 404 });
+    }
+    const response: ReceiveStockResponse = {
+      purchaseOrderId: result.po.purchaseOrderId,
+      skuId: result.po.skuId,
+      receivedQuantity: result.history.receivedQuantity,
+      currentStock: result.currentStock,
+      status: result.po.status,
+    };
+    return HttpResponse.json(response);
   }),
 
-  // GET /api/seller/products/{id}/options
-  http.get('/api/seller/products/:id/options', ({ params }) => {
-    return HttpResponse.json({
-      data: [
-        { id: 1, productId: Number(params.id), name: '사이즈 S', stock: 30, price: 0 },
-        { id: 2, productId: Number(params.id), name: '사이즈 M', stock: 12, price: 0 },
-      ],
-    });
+  http.patch('*/api/seller/stocks/receive/:id', async ({ params, request }) => {
+    const body = (await request.json()) as ReceiveAdjustRequest;
+    if (!body?.reason) {
+      return HttpResponse.json({ error: 'reason required' }, { status: 400 });
+    }
+    const result = adjustReceive(Number(params.id), body.receivedQuantity, body.reason);
+    if (!result) {
+      return HttpResponse.json({ error: 'Receive history not found' }, { status: 404 });
+    }
+    const response: ReceiveAdjustResponse = {
+      receiveHistoryId: result.history.stockHistoryId,
+      skuId: result.history.skuId,
+      originalQuantity: result.originalQty,
+      adjustedQuantity: result.history.receivedQuantity,
+      currentStock: result.newStock,
+      reason: result.reason,
+    };
+    return HttpResponse.json(response);
   }),
 
-  // POST /api/seller/products/{id}/options
-  http.post('/api/seller/products/:id/options', async ({ params, request }) => {
-    const body = (await request.json()) as { name?: string; stock?: number };
-    return HttpResponse.json(
-      {
-        data: {
-          id: Date.now(),
-          productId: Number(params.id),
-          name: body.name ?? '',
-          stock: body.stock ?? 0,
-        },
-      },
-      { status: 201 },
-    );
-  }),
-
-  // GET /api/seller/orders
-  http.get('/api/seller/orders', () => {
-    return HttpResponse.json({ data: mockOrders });
-  }),
-
-  // POST /api/seller/orders/{id}/invoice
-  http.post('/api/seller/orders/:id/invoice', async ({ params, request }) => {
-    const body = (await request.json()) as { trackingNumber?: string };
-    return HttpResponse.json({
-      data: {
-        orderId: Number(params.id),
-        trackingNumber: body.trackingNumber ?? '',
-        status: 'shipped',
-      },
-    });
-  }),
-
-  // GET /api/seller/stock
-  http.get('/api/seller/stock', () => {
-    return HttpResponse.json({
-      data: mockProducts.map((p) => ({
-        productId: p.id,
-        name: p.name,
-        stock: 50 - p.id * 5,
-        threshold: 10,
-      })),
-    });
-  }),
-
-  // POST /api/seller/stock/order
-  http.post('/api/seller/stock/order', async ({ request }) => {
-    const body = (await request.json()) as { items?: unknown };
-    return HttpResponse.json(
-      { data: { id: Date.now(), items: body.items ?? [] } },
-      { status: 201 },
-    );
-  }),
-
-  // GET /api/seller/settlement
-  http.get('/api/seller/settlement', () => {
-    return HttpResponse.json({
-      data: [
-        { period: '2026-04', amount: 8430000, status: 'completed' },
-        { period: '2026-03', amount: 7120000, status: 'completed' },
-      ],
-    });
-  }),
-
-  // GET /api/seller/cs
-  http.get('/api/seller/cs', () => {
-    return HttpResponse.json({
-      data: [
-        {
-          id: 1,
-          subject: '배송 지연 문의',
-          status: 'open',
-          createdAt: '2026-04-29T10:00:00Z',
-        },
-        {
-          id: 2,
-          subject: '환불 진행 상황',
-          status: 'in_progress',
-          createdAt: '2026-04-28T14:00:00Z',
-        },
-      ],
-    });
+  http.patch('*/api/seller/stocks/receive/:id/cancel', ({ params }) => {
+    const result = cancelReceive(Number(params.id));
+    if (!result) {
+      return HttpResponse.json({ error: 'Receive history not found' }, { status: 404 });
+    }
+    const response: ReceiveCancelResponse = {
+      receiveHistoryId: result.history.stockHistoryId,
+      skuId: result.history.skuId,
+      cancelledQuantity: result.cancelledQty,
+      currentStock: result.newStock,
+      purchaseOrderStatus: result.poStatus,
+    };
+    return HttpResponse.json(response);
   }),
 ];
