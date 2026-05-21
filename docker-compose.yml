@@ -26,7 +26,7 @@ services:
 
   # 백엔드 — BE 팀이 Docker Hub 에 빌드한 이미지
   app:
-    image: kwondh1126/ecommerce-be:latest
+    image: kwondh1126/ecommerce-be:develop
     container_name: ecommerce-backend
     ports:
       - '8080:8080'
