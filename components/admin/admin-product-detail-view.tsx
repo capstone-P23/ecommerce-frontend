@@ -9,6 +9,7 @@ import { useProductDetail } from '@/lib/queries/products';
 
 import { AdminProductEditDialog } from './admin-product-edit-dialog';
 import { AdminSkuSection } from './admin-sku-section';
+import { AdminStockHistorySection } from './admin-stock-history-section';
 
 type Props = {
   productId: number;
@@ -48,6 +49,8 @@ export function AdminProductDetailView({ productId }: Props) {
       </Card>
 
       <AdminSkuSection productId={product.id} skus={product.skus} />
+
+      <AdminStockHistorySection productId={product.id} />
     </article>
   );
 }
