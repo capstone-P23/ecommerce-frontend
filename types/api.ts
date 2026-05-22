@@ -355,3 +355,98 @@ export type SellerInquiry = {
   body: string;
   answer?: string;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Product / SKU / Category (백엔드 정렬, api-docs.json)
+// ─────────────────────────────────────────────────────────────
+
+export type ProductCreateRequest = {
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+  mainImageUrl: string;
+  categoryId: number;
+};
+
+export type ProductUpdateRequest = Partial<ProductCreateRequest>;
+
+export type SkuOptionRequest = {
+  name: string;
+  value: string;
+};
+
+export type AddSkuRequest = {
+  options: SkuOptionRequest[];
+  initialStock: number;
+};
+
+export type AdjustStockRequest = {
+  quantity: number;
+};
+
+export type CategoryCreateRequest = {
+  name: string;
+  /** ^[a-zA-Z0-9-]+$ pattern (백엔드 제약) */
+  slug: string;
+};
+
+export type CategoryUpdateRequest = Partial<CategoryCreateRequest>;
+
+export type StockChangeType =
+  | 'ORDER'
+  | 'ORDER_CANCEL'
+  | 'ADMIN_INCREASE'
+  | 'ADMIN_DECREASE'
+  | 'SKU_CREATED';
+
+export type StockHistory = {
+  id: number;
+  productId: number;
+  productName: string;
+  skuId: number;
+  skuCode: string;
+  skuOptionsSnapshot: string;
+  changeType: StockChangeType;
+  quantity: number;
+  stockBefore: number;
+  stockAfter: number;
+  orderId?: number;
+  occurredAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Member
+// ─────────────────────────────────────────────────────────────
+
+export type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
+export type MemberRole = 'USER' | 'ADMIN';
+
+export type MemberAdmin = {
+  id: number;
+  email: string;
+  name: string;
+  picture?: string;
+  status: MemberStatus;
+  role: MemberRole;
+  emailVerified: boolean;
+  createdAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Notification
+// ─────────────────────────────────────────────────────────────
+
+export type NotificationType = 'SOLD_OUT';
+
+export type Notification = {
+  id: number;
+  type: NotificationType;
+  productId: number;
+  productName: string;
+  skuId: number;
+  skuCode: string;
+  skuOptionsSnapshot: string;
+  isRead: boolean;
+  occurredAt: string;
+};
