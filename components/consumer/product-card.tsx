@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,6 +7,9 @@ import { formatPrice } from '@/lib/format';
 import type { ProductSummary } from '@/types/api';
 
 import { ProductStatusBadge } from './product-status-badge';
+
+// 5-column 그리드 기준 viewport 1280px 환경: 카드 폭 ≈ 240px
+const CARD_IMAGE_SIZES = '(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 240px';
 
 /**
  * 상품 카드 — 그리드 1칸.
@@ -29,14 +33,14 @@ export function ProductCard({ product, href }: Props) {
     >
       <Card className="overflow-hidden border-border">
         <div className="relative aspect-square bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={product.mainImageUrl}
             alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            fill
+            sizes={CARD_IMAGE_SIZES}
+            className="object-cover transition-transform group-hover:scale-105"
           />
-          <div className="absolute left-2 top-2">
+          <div className="absolute left-2 top-2 z-10">
             <ProductStatusBadge status={product.status} />
           </div>
         </div>

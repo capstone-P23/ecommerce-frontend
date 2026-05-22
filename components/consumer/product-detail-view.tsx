@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,12 +27,14 @@ export function ProductDetailView({ productId, storeDomain }: Props) {
 
   return (
     <article className="grid gap-8 lg:grid-cols-2">
-      <div className="aspect-square overflow-hidden rounded-lg bg-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+        <Image
           src={product.mainImageUrl}
           alt={product.name}
-          className="h-full w-full object-cover"
+          fill
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          className="object-cover"
+          priority
         />
       </div>
 
