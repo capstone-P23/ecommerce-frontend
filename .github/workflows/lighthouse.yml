@@ -1,0 +1,45 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+# assertion 은 warn 모드 (점수 변동 큰 환경 — fail 시키지 않음).
+# 측정 결과는 LHCI temporary-public-storage 링크로 확인.
+jobs:
+  lighthouse:
+    name: Render cost / Performance audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      - name: Build (with MSW enabled in prod)
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          # production build 에서도 MSW 가 동작하도록 강제 활성화.
+          # (백엔드 실제 endpoint 없이 lighthouse 측정 가능)
+          NEXT_PUBLIC_API_MOCKING: enabled
+
+      - name: Run Lighthouse CI
+        run: npm run lighthouse
+        env:
+          NEXT_PUBLIC_API_MOCKING: enabled
