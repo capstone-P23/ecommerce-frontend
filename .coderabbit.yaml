@@ -48,6 +48,9 @@ reviews:
     - '.coderabbit.yaml'
     - 'next.config.ts'
     - 'eslint.config.mjs'
+    - 'jest.config.mjs'
+    - 'jest.setup.ts'
+    - 'lighthouserc.json'
     - 'docker-compose*.yml'
     - '.env.example'
     # 리뷰 대상 — 문서
