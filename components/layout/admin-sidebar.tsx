@@ -9,6 +9,8 @@ import {
   ScrollText,
   Package,
   FolderTree,
+  UserCog,
+  Bell,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -27,6 +29,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/dashboard', label: '대시보드', icon: LayoutDashboard },
   { href: '/admin/products', label: '상품', icon: Package },
   { href: '/admin/categories', label: '카테고리', icon: FolderTree },
+  { href: '/admin/members', label: '회원', icon: UserCog },
+  { href: '/admin/notifications', label: '알림', icon: Bell },
   { href: '/admin/sellers', label: '판매자 관리', icon: Users },
   { href: '/admin/policy', label: '정산 정책', icon: FileText },
   { href: '/admin/contents', label: '컨텐츠 / 보안 로그', icon: ScrollText },
