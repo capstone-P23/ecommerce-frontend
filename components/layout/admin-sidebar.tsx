@@ -7,6 +7,8 @@ import {
   Users,
   FileText,
   ScrollText,
+  Package,
+  FolderTree,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -20,9 +22,11 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-// 관리자 사이드바 메뉴 — project_architecture.md 의 admin 영역 매핑
+// 관리자 사이드바 메뉴 — 백엔드 정렬 (phase 7a~) + 설계서 기존 mock 영역 혼재
 const NAV_ITEMS: NavItem[] = [
   { href: '/admin/dashboard', label: '대시보드', icon: LayoutDashboard },
+  { href: '/admin/products', label: '상품', icon: Package },
+  { href: '/admin/categories', label: '카테고리', icon: FolderTree },
   { href: '/admin/sellers', label: '판매자 관리', icon: Users },
   { href: '/admin/policy', label: '정산 정책', icon: FileText },
   { href: '/admin/contents', label: '컨텐츠 / 보안 로그', icon: ScrollText },
