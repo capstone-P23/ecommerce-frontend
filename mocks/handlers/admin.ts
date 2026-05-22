@@ -9,6 +9,8 @@ import type {
   ProductUpdateRequest,
 } from '@/types/api';
 
+import type { PageResponse, MemberAdmin, Notification, StockHistory } from '@/types/api';
+
 import {
   addSku,
   createCategory,
@@ -20,6 +22,17 @@ import {
   updateCategory,
   updateProduct,
 } from '../fixtures/admin-products';
+import {
+  deleteMember,
+  findMember,
+  markAllAsRead,
+  markAsRead,
+  setBlacklist,
+  snapshotMembers,
+  snapshotStockHistories,
+  unreadCount,
+  adminNotificationsState,
+} from '../fixtures/admin-members';
 
 /**
  * Admin 핸들러 — 백엔드 api-docs.json 정렬.
@@ -131,4 +144,123 @@ export const adminHandlers = [
     if (!category) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
     return HttpResponse.json(category);
   }),
+
+  // ─── Member ────────────────────────────────────────────────
+  http.get('*/api/admin/members', ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status');
+    const keyword = url.searchParams.get('keyword');
+    const page = Number(url.searchParams.get('page') ?? 0);
+    const size = Number(url.searchParams.get('size') ?? 20);
+    const all = snapshotMembers({ status, keyword });
+    const start = page * size;
+    const slice = all.slice(start, start + size);
+    const totalPages = Math.max(1, Math.ceil(all.length / size));
+    const response: PageResponse<MemberAdmin> = {
+      content: slice,
+      totalElements: all.length,
+      totalPages,
+      number: page,
+      size,
+      first: page === 0,
+      last: page >= totalPages - 1,
+      numberOfElements: slice.length,
+      empty: slice.length === 0,
+    };
+    return HttpResponse.json(response);
+  }),
+
+  http.get('*/api/admin/members/:memberId', ({ params }) => {
+    const member = findMember(Number(params.memberId));
+    if (!member) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
+    return HttpResponse.json(member);
+  }),
+
+  http.delete('*/api/admin/members/:memberId', ({ params }) => {
+    const ok = deleteMember(Number(params.memberId));
+    if (!ok) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  http.post('*/api/admin/members/:memberId/blacklist', ({ params }) => {
+    const member = setBlacklist(Number(params.memberId), true);
+    if (!member) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
+    return HttpResponse.json(member);
+  }),
+
+  http.delete('*/api/admin/members/:memberId/blacklist', ({ params }) => {
+    const member = setBlacklist(Number(params.memberId), false);
+    if (!member) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
+    return HttpResponse.json(member);
+  }),
+
+  // ─── Notifications ─────────────────────────────────────────
+  http.get('*/api/admin/notifications', ({ request }) => {
+    const url = new URL(request.url);
+    const page = Number(url.searchParams.get('page') ?? 0);
+    const size = Number(url.searchParams.get('size') ?? 20);
+    const all = adminNotificationsState.list;
+    const start = page * size;
+    const slice = all.slice(start, start + size);
+    const totalPages = Math.max(1, Math.ceil(all.length / size));
+    const response: PageResponse<Notification> = {
+      content: slice,
+      totalElements: all.length,
+      totalPages,
+      number: page,
+      size,
+      first: page === 0,
+      last: page >= totalPages - 1,
+      numberOfElements: slice.length,
+      empty: slice.length === 0,
+    };
+    return HttpResponse.json(response);
+  }),
+
+  http.get('*/api/admin/notifications/unread-count', () =>
+    HttpResponse.json({ count: unreadCount() }),
+  ),
+
+  http.patch('*/api/admin/notifications/:id/read', ({ params }) => {
+    const item = markAsRead(Number(params.id));
+    if (!item) return HttpResponse.json({ error: 'Not Found' }, { status: 404 });
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  http.patch('*/api/admin/notifications/read-all', () => {
+    markAllAsRead();
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  // ─── Stock histories (per product) ─────────────────────────
+  http.get(
+    '*/api/admin/products/:productId/stock-histories',
+    ({ params, request }) => {
+      const url = new URL(request.url);
+      const skuIdParam = url.searchParams.get('skuId');
+      const changeType = url.searchParams.get('changeType');
+      const page = Number(url.searchParams.get('page') ?? 0);
+      const size = Number(url.searchParams.get('size') ?? 20);
+
+      const all = snapshotStockHistories(Number(params.productId), {
+        skuId: skuIdParam ? Number(skuIdParam) : null,
+        changeType,
+      });
+      const start = page * size;
+      const slice = all.slice(start, start + size);
+      const totalPages = Math.max(1, Math.ceil(all.length / size));
+      const response: PageResponse<StockHistory> = {
+        content: slice,
+        totalElements: all.length,
+        totalPages,
+        number: page,
+        size,
+        first: page === 0,
+        last: page >= totalPages - 1,
+        numberOfElements: slice.length,
+        empty: slice.length === 0,
+      };
+      return HttpResponse.json(response);
+    },
+  ),
 ];

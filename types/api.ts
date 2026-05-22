@@ -414,3 +414,39 @@ export type StockHistory = {
   orderId?: number;
   occurredAt: string;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Member
+// ─────────────────────────────────────────────────────────────
+
+export type MemberStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
+export type MemberRole = 'USER' | 'ADMIN';
+
+export type MemberAdmin = {
+  id: number;
+  email: string;
+  name: string;
+  picture?: string;
+  status: MemberStatus;
+  role: MemberRole;
+  emailVerified: boolean;
+  createdAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Notification
+// ─────────────────────────────────────────────────────────────
+
+export type NotificationType = 'SOLD_OUT';
+
+export type Notification = {
+  id: number;
+  type: NotificationType;
+  productId: number;
+  productName: string;
+  skuId: number;
+  skuCode: string;
+  skuOptionsSnapshot: string;
+  isRead: boolean;
+  occurredAt: string;
+};
