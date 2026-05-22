@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Minus, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -53,14 +54,14 @@ export function CartItemRow({ item, productHref }: Props) {
     >
       <Link
         href={productHref}
-        className="block size-24 shrink-0 overflow-hidden rounded-md bg-muted"
+        className="relative block size-24 shrink-0 overflow-hidden rounded-md bg-muted"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={item.productImageUrl}
           alt={item.productName}
-          className="h-full w-full object-cover"
-          loading="lazy"
+          fill
+          sizes="96px"
+          className="object-cover"
         />
       </Link>
 

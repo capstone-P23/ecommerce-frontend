@@ -1,5 +1,6 @@
 // 모든 도메인 핸들러를 한 배열로 합쳐 setupWorker / setupServer 에 전달
 import { adminHandlers } from './admin';
+import { adminMockHandlers } from './admin-mock';
 import { aiHandlers } from './ai';
 import { authHandlers } from './auth';
 import { cartHandlers } from './cart';
@@ -25,4 +26,5 @@ export const handlers = [
   ...sellerHandlers,
   ...sellerMockHandlers,
   ...adminHandlers,
+  ...adminMockHandlers,
 ];

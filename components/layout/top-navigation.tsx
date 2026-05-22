@@ -3,12 +3,11 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent } from 'react';
-import { Search, User, LogIn } from 'lucide-react';
+import { Search } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { buttonVariants } from '@/components/ui/button';
 import { CartIconWithBadge } from '@/components/consumer/cart-icon-with-badge';
+import { UserMenu } from '@/components/layout/user-menu';
 
 type Props = {
   storeDomain: string;
@@ -72,20 +71,7 @@ export function TopNavigation({ storeDomain }: Props) {
 
         <nav className="flex items-center gap-1">
           <CartIconWithBadge href={`/consumer/${storeDomain}/cart`} />
-          <Link
-            href={`/consumer/${storeDomain}/mypage/orders`}
-            className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}
-            aria-label="마이페이지"
-          >
-            <User className="size-5" />
-          </Link>
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}
-          >
-            <LogIn className="size-4" />
-            로그인
-          </Link>
+          <UserMenu mypageHref={`/consumer/${storeDomain}/mypage/orders`} />
         </nav>
       </div>
     </header>

@@ -14,8 +14,11 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { useMe } from '@/lib/auth/queries';
+
+import { SidebarLogoutButton } from './sidebar-logout-button';
 
 type NavItem = {
   href: string;
@@ -76,15 +79,28 @@ export function SellerSidebar() {
 
       <Separator />
 
-      <div className="flex items-center gap-3 p-3">
-        <Avatar className="size-8">
-          <AvatarFallback>S</AvatarFallback>
-        </Avatar>
-        <div className="text-xs leading-tight">
-          <p className="font-medium">판매자</p>
-          <p className="text-muted-foreground">TODO: 인증 연결 (Phase 4)</p>
-        </div>
+      <SellerSidebarUser />
+      <div className="p-2">
+        <SidebarLogoutButton />
       </div>
     </aside>
+  );
+}
+
+function SellerSidebarUser() {
+  const { data: me } = useMe();
+  const initial = me?.name?.[0] ?? 'S';
+
+  return (
+    <div className="flex items-center gap-3 p-3">
+      <Avatar className="size-8">
+        {me?.picture && <AvatarImage src={me.picture} alt="" />}
+        <AvatarFallback>{initial}</AvatarFallback>
+      </Avatar>
+      <div className="text-xs leading-tight">
+        <p className="font-medium">{me?.name ?? '판매자'}</p>
+        {me?.email && <p className="truncate text-muted-foreground">{me.email}</p>}
+      </div>
+    </div>
   );
 }
