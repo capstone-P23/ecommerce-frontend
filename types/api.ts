@@ -450,3 +450,62 @@ export type Notification = {
   isRead: boolean;
   occurredAt: string;
 };
+
+// ─────────────────────────────────────────────────────────────
+// Admin — mock-only (백엔드 endpoint 미정, phase 7c)
+// dashboard / sellers / policy / contents
+// ─────────────────────────────────────────────────────────────
+
+export type AdminDashboardStats = {
+  grossSales: number;
+  currency: string;
+  totalOrders: number;
+  totalMembers: number;
+  activeSellers: number;
+  unreadNotifications: number;
+};
+
+export type SellerApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type SellerGrade = 'BRONZE' | 'SILVER' | 'GOLD';
+
+export type SellerApplication = {
+  id: number;
+  brandName: string;
+  representativeName: string;
+  email: string;
+  appliedAt: string;
+  status: SellerApplicationStatus;
+  grade: SellerGrade | null;
+};
+
+export type SettlementCycle = 'WEEKLY' | 'MONTHLY';
+
+export type SettlementPolicy = {
+  commissionRate: number; // 0.05 = 5%
+  cycle: SettlementCycle;
+  minimumPayout: number;
+  currency: string;
+};
+
+export type AdminBanner = {
+  bannerId: number;
+  title: string;
+  imageUrl: string;
+  linkUrl: string;
+  active: boolean;
+  displayOrder: number;
+};
+
+export type SecurityLogType =
+  | 'LOGIN_FAILURE'
+  | 'PERMISSION_DENIED'
+  | 'SUSPICIOUS_REQUEST';
+
+export type SecurityLog = {
+  logId: number;
+  type: SecurityLogType;
+  actorEmail?: string;
+  ipAddress: string;
+  message: string;
+  occurredAt: string;
+};
