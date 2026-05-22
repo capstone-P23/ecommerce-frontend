@@ -1,7 +1,7 @@
 # AI 맞춤 추천 이커머스 플랫폼 — Frontend
 
-> Next.js 16 App Router 기반 B2B2C 멀티테넌시 이커머스 프론트엔드.
-> 관리자(Admin) / 판매자(Seller) / 소비자(Consumer) 3 역할.
+- **Next.js 16 App Router 기반 B2B2C 멀티테넌시 이커머스 프론트엔드.**
+- **관리자(Admin) / 판매자(Seller) / 소비자(Consumer) 3 역할.**
 
 ## 🔗 링크
 
@@ -10,8 +10,6 @@
 | Production | https://ecommerce-frontend-six-kohl.vercel.app |
 | Backend image | `kwondh1126/ecommerce-be:latest` (Docker Hub) |
 | OpenAPI 스펙 | `api/api-docs.json` |
-
----
 
 ## 🧱 기술 스택
 
@@ -29,8 +27,6 @@
 | 성능 측정 | Lighthouse CI |
 | 코드 리뷰 | CodeRabbit AI (한국어) |
 | 배포 | Vercel (GitHub Actions deploy) |
-
----
 
 ## 📂 디렉토리 구조
 
@@ -56,8 +52,6 @@ mocks/
 types/api.ts          백엔드 OpenAPI 응답 / request 타입 (1:1 미러)
 api/api-docs.json     백엔드 OpenAPI 3.1 스펙 — 단일 출처
 ```
-
----
 
 ## 🚀 시작하기
 
@@ -91,8 +85,6 @@ npm run dev                 # FE 는 호스트에서 (3000)
 
 상세 가이드: [`docs/docker-local-dev.md`](docs/docker-local-dev.md)
 
----
-
 ## 🛠️ 자주 쓰는 명령어
 
 ```bash
@@ -113,8 +105,6 @@ npm run lighthouse   # Lighthouse CI (build → start → 측정)
 # dev 서버가 stale 캐시 / 포트 점유로 이상 동작
 pkill -f "next dev" && rm -rf .next && npm run dev
 ```
-
----
 
 ## 🌳 워크플로
 
@@ -156,8 +146,6 @@ pkill -f "next dev" && rm -rf .next && npm run dev
 - **브랜치명**: `feature/* chore/* refactor/* ci/* docs/* test/*` — 머지 후 자동 삭제
 - **PR 본문**: `.github/PULL_REQUEST_TEMPLATE.md` 따름
 
----
-
 ## 🤖 CI / 자동화
 
 `.github/workflows/`
@@ -173,8 +161,6 @@ pkill -f "next dev" && rm -rf .next && npm run dev
 
 CodeRabbit AI 리뷰는 별도 — `.coderabbit.yaml` (한국어, `base_branches: dev` 포함).
 
----
-
 ## 🧭 핵심 원칙
 
 1. **백엔드 단일 출처** — `api/api-docs.json` 이 single source of truth. 새 endpoint 작업 시 항상 먼저 확인. mock 핸들러 / queryKey / 타입은 백엔드 스키마 그대로 복제
@@ -183,8 +169,6 @@ CodeRabbit AI 리뷰는 별도 — `.coderabbit.yaml` (한국어, `base_branches
 4. **as-we-go mock 정렬** — Phase 진행 중 사용처 생길 때 해당 도메인 mock 을 백엔드로 정렬
 5. **백엔드 미구현 기능** — `<ComingSoonSection />` 또는 disabled UI 로 명시 (숨기지 말 것)
 6. **Toss 가이드** — `.claude/toss-frontend-rules.md` (Readability / Predictability / Cohesion / Coupling)
-
----
 
 ## ⚠️ 자주 헷갈리는 지뢰
 
@@ -202,8 +186,6 @@ CodeRabbit AI 리뷰는 별도 — `.coderabbit.yaml` (한국어, `base_branches
 | RHF number 필드 + zod | **`register({ valueAsNumber: true })`** + `z.number()` |
 | Mock handler 의 절대 URL | **`*/api/...` 와일드카드** — 절대/상대 둘 다 매치 |
 
----
-
 ## 📚 참고 문서
 
 세션 / 컨텍스트:
@@ -218,8 +200,6 @@ CodeRabbit AI 리뷰는 별도 — `.coderabbit.yaml` (한국어, `base_branches
 - `api/api-docs.json` — 백엔드 OpenAPI 3.1 (단일 출처)
 - `docs/docker-local-dev.md` — Docker 로컬 환경
 - `docs/husky.md` — 커밋 규약
-
----
 
 ## 🌐 배포 환경에서 로그인 활성화
 
