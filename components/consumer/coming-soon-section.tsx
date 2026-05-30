@@ -12,16 +12,14 @@ type Props = {
   plannedPhase: string;
 };
 
-export function ComingSoonSection({ title, plannedPhase }: Props) {
+export function ComingSoonSection({ title }: Props) {
   return (
     <Card className="border-dashed bg-muted/30">
       <CardContent className="flex items-center gap-3 p-4">
         <Sparkles className="size-5 text-muted-foreground" aria-hidden="true" />
         <div className="space-y-0.5">
           <p className="text-sm font-medium">{title}</p>
-          <p className="text-xs text-muted-foreground">
-            준비 중 — {plannedPhase} 에서 제공 예정
-          </p>
+          <p className="text-xs text-muted-foreground">준비 중</p>
         </div>
       </CardContent>
     </Card>
