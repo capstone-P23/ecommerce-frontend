@@ -107,6 +107,10 @@ export type QuestionCreateRequest = {
   secret?: boolean;
 };
 
+export type AnswerRequest = {
+  content: string;
+};
+
 // ─────────────────────────────────────────────────────────────
 // Cart
 // ─────────────────────────────────────────────────────────────
