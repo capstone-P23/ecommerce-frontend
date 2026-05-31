@@ -18,57 +18,58 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useAnswerInquiry,
-  useSellerInquiries,
-} from '@/lib/queries/seller-mock';
-import type { SellerInquiry } from '@/types/api';
+  useAnswerQuestion,
+  useDeleteAnswer,
+  useSellerQuestions,
+  useUpdateAnswer,
+} from '@/lib/queries/seller';
+import type { QuestionResponse, QuestionStatus } from '@/types/api';
 
-import { MockNotice } from './mock-notice';
-
-const STATUS_LABEL: Record<SellerInquiry['status'], string> = {
-  OPEN: '미답변',
-  IN_PROGRESS: '진행중',
-  CLOSED: '완료',
+const STATUS_LABEL: Record<QuestionStatus, string> = {
+  PENDING: '미답변',
+  ANSWERED: '답변완료',
 };
 
 const STATUS_VARIANT: Record<
-  SellerInquiry['status'],
+  QuestionStatus,
   'default' | 'secondary' | 'destructive'
 > = {
-  OPEN: 'default',
-  IN_PROGRESS: 'default',
-  CLOSED: 'secondary',
+  PENDING: 'default',
+  ANSWERED: 'secondary',
 };
 
 export function SellerCsView() {
-  const { data, isLoading } = useSellerInquiries();
+  const { data, isLoading } = useSellerQuestions();
   if (isLoading) return <Skeleton className="h-64 w-full" />;
-  const list = data ?? [];
+  const list = data?.content ?? [];
 
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-bold">고객 문의</h1>
-        <MockNotice />
+        <h1 className="text-2xl font-bold">상품 Q&A 관리</h1>
       </header>
 
       <div className="space-y-3">
-        {list.map((inquiry) => (
-          <InquiryCard key={inquiry.inquiryId} inquiry={inquiry} />
+        {list.map((question) => (
+          <QuestionCard key={question.id} question={question} />
         ))}
       </div>
     </div>
   );
 }
 
-function InquiryCard({ inquiry }: { inquiry: SellerInquiry }) {
+function QuestionCard({ question }: { question: QuestionResponse }) {
   const [open, setOpen] = useState(false);
   const [answer, setAnswer] = useState('');
-  const answerMutation = useAnswerInquiry();
+  const answerMutation = useAnswerQuestion();
+  const updateMutation = useUpdateAnswer();
+  const deleteMutation = useDeleteAnswer();
 
   const handleSubmit = () => {
+    const content = answer.trim();
+    if (!content) return;
     answerMutation.mutate(
-      { inquiryId: inquiry.inquiryId, answer },
+      { questionId: question.id, content },
       {
         onSuccess: () => {
           toast.success('답변이 등록되었습니다.');
@@ -80,22 +81,47 @@ function InquiryCard({ inquiry }: { inquiry: SellerInquiry }) {
     );
   };
 
+  const handleUpdate = () => {
+    const content = answer.trim();
+    if (!content) return;
+    updateMutation.mutate(
+      { questionId: question.id, content },
+      {
+        onSuccess: () => {
+          toast.success('답변이 수정되었습니다.');
+          setOpen(false);
+          setAnswer('');
+        },
+        onError: (e) => toast.error(`수정 실패: ${e.message}`),
+      },
+    );
+  };
+
+  const handleDelete = () => {
+    if (!confirm('답변을 삭제할까요?')) return;
+    deleteMutation.mutate(question.id, {
+      onSuccess: () => toast.success('답변이 삭제되었습니다.'),
+      onError: (e) => toast.error(`삭제 실패: ${e.message}`),
+    });
+  };
+
   return (
     <Card>
       <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-medium">{inquiry.subject}</p>
-              <Badge variant={STATUS_VARIANT[inquiry.status]}>
-                {STATUS_LABEL[inquiry.status]}
+              <p className="font-medium">{question.productName}</p>
+              <Badge variant={STATUS_VARIANT[question.status]}>
+                {STATUS_LABEL[question.status]}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {inquiry.customerName} · {new Date(inquiry.createdAt).toLocaleString('ko-KR')}
+              {question.memberName} ·{' '}
+              {new Date(question.createdAt).toLocaleString('ko-KR')}
             </p>
           </div>
-          {inquiry.status !== 'CLOSED' && (
+          {question.status === 'PENDING' && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger render={<Button size="sm" variant="outline" />}>
                 답변
@@ -105,14 +131,21 @@ function InquiryCard({ inquiry }: { inquiry: SellerInquiry }) {
                   <DialogTitle>답변 작성</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{inquiry.body}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {question.content}
+                  </p>
                   <Label>답변</Label>
-                  <Input value={answer} onChange={(e) => setAnswer(e.target.value)} />
+                  <Input
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                  />
                 </div>
                 <DialogFooter>
                   <Button
                     onClick={handleSubmit}
-                    disabled={answer.trim().length === 0 || answerMutation.isPending}
+                    disabled={
+                      answer.trim().length === 0 || answerMutation.isPending
+                    }
                   >
                     등록
                   </Button>
@@ -121,11 +154,52 @@ function InquiryCard({ inquiry }: { inquiry: SellerInquiry }) {
             </Dialog>
           )}
         </div>
-        <p className="text-sm">{inquiry.body}</p>
-        {inquiry.answer && (
+        <p className="text-sm">{question.content}</p>
+        {question.answer && (
           <div className="rounded-md bg-muted/30 p-2 text-sm">
             <p className="text-xs font-medium text-muted-foreground">답변</p>
-            <p>{inquiry.answer}</p>
+            <p>{question.answer}</p>
+            <div className="mt-2 flex gap-2">
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger render={<Button size="sm" variant="outline" />}>
+                  수정
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>답변 수정</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {question.content}
+                    </p>
+                    <Label>답변</Label>
+                    <Input
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      placeholder={question.answer ?? ''}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={handleUpdate}
+                      disabled={
+                        answer.trim().length === 0 || updateMutation.isPending
+                      }
+                    >
+                      수정
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+              >
+                삭제
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
