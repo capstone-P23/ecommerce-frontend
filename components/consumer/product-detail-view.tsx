@@ -10,6 +10,7 @@ import { formatPrice } from '@/lib/format';
 import { AddToCartButton } from './add-to-cart-button';
 import { ComingSoonSection } from './coming-soon-section';
 import { ProductStatusBadge } from './product-status-badge';
+import { ProductQnaSection } from './product-qna-section';
 
 type Props = {
   productId: number;
@@ -17,10 +18,21 @@ type Props = {
 };
 
 export function ProductDetailView({ productId, storeDomain }: Props) {
-  const { data: product, isLoading, isError, error } = useProductDetail(productId);
+  const {
+    data: product,
+    isLoading,
+    isError,
+    error,
+  } = useProductDetail(productId);
 
   if (isLoading) return <ProductDetailSkeleton />;
-  if (isError) return <ProductDetailError message={(error as Error)?.message ?? '오류'} storeDomain={storeDomain} />;
+  if (isError)
+    return (
+      <ProductDetailError
+        message={(error as Error)?.message ?? '오류'}
+        storeDomain={storeDomain}
+      />
+    );
   if (!product) return null;
 
   const isAvailable = product.status === 'ACTIVE' && product.inStock;
@@ -41,7 +53,9 @@ export function ProductDetailView({ productId, storeDomain }: Props) {
       <div className="space-y-6">
         <header className="space-y-2">
           <div className="flex items-center gap-2">
-            <p className="text-sm text-muted-foreground">{product.category.name}</p>
+            <p className="text-sm text-muted-foreground">
+              {product.category.name}
+            </p>
             <ProductStatusBadge status={product.status} />
           </div>
           <h1 className="text-2xl font-bold">{product.name}</h1>
@@ -62,11 +76,14 @@ export function ProductDetailView({ productId, storeDomain }: Props) {
           <AddToCartButton product={product} />
 
           {!isAvailable && (
-            <p className="text-xs text-destructive">현재 구매할 수 없는 상품입니다.</p>
+            <p className="text-xs text-destructive">
+              현재 구매할 수 없는 상품입니다.
+            </p>
           )}
         </div>
 
-        <ComingSoonSection title="상품 리뷰 · Q&A" plannedPhase="백엔드 구현 후" />
+        <ProductQnaSection productId={productId} />
+        <ComingSoonSection title="상품 리뷰" plannedPhase="백엔드 구현 후" />
       </div>
     </article>
   );
@@ -87,11 +104,20 @@ function ProductDetailSkeleton() {
   );
 }
 
-function ProductDetailError({ message, storeDomain }: { message: string; storeDomain: string }) {
+function ProductDetailError({
+  message,
+  storeDomain,
+}: {
+  message: string;
+  storeDomain: string;
+}) {
   return (
     <div className="mx-auto max-w-md space-y-4 text-center">
       <p className="text-sm text-destructive">{message}</p>
-      <Link href={`/consumer/${storeDomain}/products`} className="text-sm underline">
+      <Link
+        href={`/consumer/${storeDomain}/products`}
+        className="text-sm underline"
+      >
         상품 목록으로 돌아가기
       </Link>
     </div>

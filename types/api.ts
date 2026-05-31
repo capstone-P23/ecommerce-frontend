@@ -84,6 +84,30 @@ export type ProductDetail = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Q&A
+// ─────────────────────────────────────────────────────────────
+
+export type QuestionStatus = 'PENDING' | 'ANSWERED';
+
+export type QuestionResponse = {
+  id: number;
+  productId: number;
+  productName: string;
+  memberName: string;
+  content: string;
+  secret: boolean;
+  status: QuestionStatus;
+  answer?: string;
+  answeredAt?: string;
+  createdAt: string;
+};
+
+export type QuestionCreateRequest = {
+  content: string;
+  secret?: boolean;
+};
+
+// ─────────────────────────────────────────────────────────────
 // Cart
 // ─────────────────────────────────────────────────────────────
 
@@ -259,6 +283,30 @@ export type ReceiveHistory = {
   receivedQuantity: number;
   stockAfter: number;
   createdAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// AI
+// ─────────────────────────────────────────────────────────────
+
+export type AiChatRequest = {
+  sessionId: string;
+  message: string;
+};
+
+export type AiChatRecommendation = {
+  productId: number;
+  name: string;
+  price: number;
+  imageUrl: string;
+  reason: string;
+};
+
+export type AiChatResponse = {
+  sessionId: string;
+  answer: string;
+  recommendations: AiChatRecommendation[];
+  followUpQuestions: string[];
 };
 
 // ─────────────────────────────────────────────────────────────
