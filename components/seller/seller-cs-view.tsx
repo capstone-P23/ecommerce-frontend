@@ -117,7 +117,8 @@ function QuestionCard({ question }: { question: QuestionResponse }) {
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {question.memberName} · {new Date(question.createdAt).toLocaleString('ko-KR')}
+              {question.memberName} ·{' '}
+              {new Date(question.createdAt).toLocaleString('ko-KR')}
             </p>
           </div>
           {question.status === 'PENDING' && (
@@ -130,14 +131,21 @@ function QuestionCard({ question }: { question: QuestionResponse }) {
                   <DialogTitle>답변 작성</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">{question.content}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {question.content}
+                  </p>
                   <Label>답변</Label>
-                  <Input value={answer} onChange={(e) => setAnswer(e.target.value)} />
+                  <Input
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                  />
                 </div>
                 <DialogFooter>
                   <Button
                     onClick={handleSubmit}
-                    disabled={answer.trim().length === 0 || answerMutation.isPending}
+                    disabled={
+                      answer.trim().length === 0 || answerMutation.isPending
+                    }
                   >
                     등록
                   </Button>
@@ -161,7 +169,9 @@ function QuestionCard({ question }: { question: QuestionResponse }) {
                     <DialogTitle>답변 수정</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">{question.content}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {question.content}
+                    </p>
                     <Label>답변</Label>
                     <Input
                       value={answer}
@@ -172,7 +182,9 @@ function QuestionCard({ question }: { question: QuestionResponse }) {
                   <DialogFooter>
                     <Button
                       onClick={handleUpdate}
-                      disabled={answer.trim().length === 0 || updateMutation.isPending}
+                      disabled={
+                        answer.trim().length === 0 || updateMutation.isPending
+                      }
                     >
                       수정
                     </Button>
