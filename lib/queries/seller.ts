@@ -11,11 +11,14 @@ import {
 import { apiFetch } from '@/lib/api/client';
 import { useAuthStore } from '@/lib/auth/store';
 import type {
+  AnswerRequest,
   CreatePurchaseOrderRequest,
   PageResponse,
   PurchaseOrderListItem,
   PurchaseOrderRef,
   PurchaseOrderStatus,
+  QuestionResponse,
+  QuestionStatus,
   ReceiveAdjustRequest,
   ReceiveAdjustResponse,
   ReceiveCancelResponse,
@@ -44,6 +47,12 @@ type ReceiveHistoryParams = {
   size?: number;
 };
 
+type SellerQuestionParams = {
+  status?: QuestionStatus | null;
+  page?: number;
+  size?: number;
+};
+
 export const sellerKeys = {
   all: ['seller'] as const,
   purchaseOrders: () => [...sellerKeys.all, 'purchase-orders'] as const,
@@ -52,9 +61,14 @@ export const sellerKeys = {
   receiveHistories: () => [...sellerKeys.all, 'receive-histories'] as const,
   receiveHistoryList: (params: ReceiveHistoryParams) =>
     [...sellerKeys.receiveHistories(), 'list', params] as const,
+  questions: () => [...sellerKeys.all, 'questions'] as const,
+  questionList: (params: SellerQuestionParams) =>
+    [...sellerKeys.questions(), 'list', params] as const,
 };
 
-const buildSearch = (entries: Array<[string, string | number | null | undefined]>) => {
+const buildSearch = (
+  entries: Array<[string, string | number | null | undefined]>,
+) => {
   const search = new URLSearchParams();
   for (const [key, value] of entries) {
     if (value == null || value === '') continue;
@@ -147,7 +161,9 @@ export function useReceiveStock(): UseMutationResult<
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sellerKeys.purchaseOrders() });
-      queryClient.invalidateQueries({ queryKey: sellerKeys.receiveHistories() });
+      queryClient.invalidateQueries({
+        queryKey: sellerKeys.receiveHistories(),
+      });
     },
   });
 }
@@ -163,13 +179,18 @@ export function useAdjustReceive(): UseMutationResult<
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ historyId, receivedQuantity, reason }) =>
-      apiFetch<ReceiveAdjustResponse>(`/api/seller/stocks/receive/${historyId}`, {
-        method: 'PATCH',
-        body: { receivedQuantity, reason },
-        authToken: accessToken,
-      }),
+      apiFetch<ReceiveAdjustResponse>(
+        `/api/seller/stocks/receive/${historyId}`,
+        {
+          method: 'PATCH',
+          body: { receivedQuantity, reason },
+          authToken: accessToken,
+        },
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: sellerKeys.receiveHistories() });
+      queryClient.invalidateQueries({
+        queryKey: sellerKeys.receiveHistories(),
+      });
     },
   });
 }
@@ -189,7 +210,96 @@ export function useCancelReceive(): UseMutationResult<
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: sellerKeys.purchaseOrders() });
-      queryClient.invalidateQueries({ queryKey: sellerKeys.receiveHistories() });
+      queryClient.invalidateQueries({
+        queryKey: sellerKeys.receiveHistories(),
+      });
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Seller Q&A
+// ─────────────────────────────────────────────────────────────
+
+export const DEFAULT_SELLER_QUESTION_PAGE_SIZE = 10;
+
+export function useSellerQuestions(
+  params: SellerQuestionParams = {},
+): UseQueryResult<PageResponse<QuestionResponse>> {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const search = buildSearch([
+    ['status', params.status ?? null],
+    ['page', params.page ?? 0],
+    ['size', params.size ?? DEFAULT_SELLER_QUESTION_PAGE_SIZE],
+  ]);
+
+  return useQuery({
+    queryKey: sellerKeys.questionList(params),
+    queryFn: () =>
+      apiFetch<PageResponse<QuestionResponse>>(
+        `/api/seller/questions?${search}`,
+        { authToken: accessToken },
+      ),
+    enabled: !!accessToken,
+  });
+}
+
+type AnswerArgs = { questionId: number } & AnswerRequest;
+
+export function useAnswerQuestion(): UseMutationResult<
+  QuestionResponse,
+  Error,
+  AnswerArgs
+> {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ questionId, ...body }) =>
+      apiFetch<QuestionResponse>(`/api/seller/questions/${questionId}/answer`, {
+        method: 'POST',
+        body,
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: sellerKeys.questions() });
+    },
+  });
+}
+
+export function useUpdateAnswer(): UseMutationResult<
+  QuestionResponse,
+  Error,
+  AnswerArgs
+> {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ questionId, ...body }) =>
+      apiFetch<QuestionResponse>(`/api/seller/questions/${questionId}/answer`, {
+        method: 'PATCH',
+        body,
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: sellerKeys.questions() });
+    },
+  });
+}
+
+export function useDeleteAnswer(): UseMutationResult<void, Error, number> {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (questionId) =>
+      apiFetch<void>(`/api/seller/questions/${questionId}/answer`, {
+        method: 'DELETE',
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: sellerKeys.questions() });
     },
   });
 }
