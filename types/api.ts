@@ -314,6 +314,69 @@ export type AiChatResponse = {
 };
 
 // ─────────────────────────────────────────────────────────────
+// Seller — Orders / Settlements (api-docs.json)
+// ─────────────────────────────────────────────────────────────
+
+export type OrderAdminStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+
+export type OrderAdminListItem = {
+  orderId: number;
+  orderNumber: string;
+  totalAmount: number;
+  status: OrderAdminStatus;
+  itemCount: number;
+  createdAt: string;
+};
+
+export type OrderAdminConfirmRequest = {
+  orderIds: number[];
+};
+
+export type OrderAdminConfirmResponse = {
+  successCount: number;
+  confirmedOrderIds: number[];
+};
+
+export type OrderAdminCancelRequest = {
+  cancelReason: string;
+  cancelReasonCode: string;
+};
+
+export type OrderAdminCancelResponse = {
+  orderId: number;
+  orderNumber: string;
+  status: OrderAdminStatus;
+  cancelReason: string;
+};
+
+export type SettlementItem = {
+  orderId: number;
+  orderNumber: string;
+  orderAmount: number;
+  fee: number;
+  settlementAmount: number;
+  confirmedAt: string;
+};
+
+export type SettlementSummaryResponse = {
+  totalSalesAmount: number;
+  totalFee: number;
+  totalSettlementAmount: number;
+  feeRate: number;
+  items: SettlementItem[];
+};
+
+export type SettlementConfirmRequest = {
+  settledMonth: string;
+};
+
+export type SettlementConfirmResponse = {
+  settledMonth: string;
+  confirmedCount: number;
+  totalSettlementAmount: number;
+};
+
+// ─────────────────────────────────────────────────────────────
 // Seller — mock-only (백엔드 endpoint 미정, phase 6b)
 // 백엔드가 정식 endpoint 를 추가하면 이 섹션을 정렬 후 mock 제거.
 // ─────────────────────────────────────────────────────────────
@@ -501,6 +564,108 @@ export type Notification = {
   skuOptionsSnapshot: string;
   isRead: boolean;
   occurredAt: string;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Banner / Seller Application / Dashboard
+// ─────────────────────────────────────────────────────────────
+
+export type BannerStatus = 'DRAFT' | 'SCHEDULED' | 'PUBLISHED' | 'EXPIRED';
+
+export type Banner = {
+  bannerId: number;
+  name: string;
+  imageUrl: string;
+  linkUrl: string;
+  startAt: string;
+  endAt: string;
+  displayOrder: number;
+  status: BannerStatus;
+};
+
+export type BannerCreateRequest = {
+  name: string;
+  imageUrl: string;
+  linkUrl?: string;
+  startAt: string;
+  endAt: string;
+  displayOrder: number;
+};
+
+export type BannerUpdateRequest = {
+  name: string;
+  imageUrl: string;
+  linkUrl?: string;
+  startAt: string;
+  endAt: string;
+  displayOrder: number;
+};
+
+export type SellerApplicationAdmin = {
+  applicationId: number;
+  status: SellerApplicationStatus;
+};
+
+export type SalesTimeSeriesItem = {
+  date: string;
+  revenue: number;
+  orderCount: number;
+};
+
+export type SalesTimeSeriesResponse = {
+  unit: 'DAILY' | 'MONTHLY';
+  startDate: string;
+  endDate: string;
+  items: SalesTimeSeriesItem[];
+  totalRevenue: number;
+  totalOrderCount: number;
+};
+
+export type RefundsTimeSeriesItem = {
+  date: string;
+  refundCount: number;
+  refundAmount: number;
+};
+
+export type RefundsTimeSeriesResponse = {
+  unit: 'DAILY' | 'MONTHLY';
+  startDate: string;
+  endDate: string;
+  items: RefundsTimeSeriesItem[];
+  totalRefundCount: number;
+  totalRefundAmount: number;
+};
+
+export type PaymentsTimeSeriesItem = {
+  date: string;
+  paymentCount: number;
+  totalAmount: number;
+  averageAmount: number;
+};
+
+export type PaymentsTimeSeriesResponse = {
+  unit: 'DAILY' | 'MONTHLY';
+  startDate: string;
+  endDate: string;
+  items: PaymentsTimeSeriesItem[];
+  totalPaymentCount: number;
+  totalAmount: number;
+  averageAmount: number;
+};
+
+export type PopularProduct = {
+  productId: number;
+  productName: string;
+  totalSoldQuantity: number;
+  totalRevenue: number;
+};
+
+export type SalesStatsResponse = {
+  totalRevenue: number;
+  currency: string;
+  orderCount: number;
+  cancelCount: number;
+  popularProducts: PopularProduct[];
 };
 
 // ─────────────────────────────────────────────────────────────
