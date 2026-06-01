@@ -15,6 +15,10 @@ import { productKeys } from '@/lib/queries/products';
 import type {
   AddSkuRequest,
   AdjustStockRequest,
+  Banner,
+  BannerCreateRequest,
+  BannerStatus,
+  BannerUpdateRequest,
   Category,
   CategoryCreateRequest,
   CategoryUpdateRequest,
@@ -22,6 +26,12 @@ import type {
   MemberStatus,
   Notification,
   PageResponse,
+  PaymentsTimeSeriesResponse,
+  RefundsTimeSeriesResponse,
+  SalesStatsResponse,
+  SalesTimeSeriesResponse,
+  SellerApplicationStatus,
+  SellerApplicationAdmin,
   ProductCreateRequest,
   ProductDetail,
   ProductUpdateRequest,
@@ -86,7 +96,11 @@ export function useUpdateProduct(): UseMutationResult<
   });
 }
 
-export function useDiscontinueProduct(): UseMutationResult<void, Error, number> {
+export function useDiscontinueProduct(): UseMutationResult<
+  void,
+  Error,
+  number
+> {
   const accessToken = useToken();
   const queryClient = useQueryClient();
   return useMutation({
@@ -119,7 +133,9 @@ export function useAddSku(): UseMutationResult<Sku, Error, AddSkuArgs> {
         authToken: accessToken,
       }),
     onSuccess: (_sku, vars) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(vars.productId) });
+      queryClient.invalidateQueries({
+        queryKey: productKeys.detail(vars.productId),
+      });
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
   });
@@ -137,7 +153,9 @@ export function useRemoveSku(): UseMutationResult<void, Error, SkuTarget> {
         authToken: accessToken,
       }),
     onSuccess: (_data, vars) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(vars.productId) });
+      queryClient.invalidateQueries({
+        queryKey: productKeys.detail(vars.productId),
+      });
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
   });
@@ -147,7 +165,11 @@ type AdjustStockArgs = SkuTarget & AdjustStockRequest;
 type AdjustResp = { currentStock: number };
 
 const buildAdjustHook = (direction: 'increase' | 'decrease') =>
-  function useAdjustHook(): UseMutationResult<AdjustResp, Error, AdjustStockArgs> {
+  function useAdjustHook(): UseMutationResult<
+    AdjustResp,
+    Error,
+    AdjustStockArgs
+  > {
     const accessToken = useToken();
     const queryClient = useQueryClient();
     return useMutation({
@@ -157,7 +179,9 @@ const buildAdjustHook = (direction: 'increase' | 'decrease') =>
           { method: 'POST', body: { quantity }, authToken: accessToken },
         ),
       onSuccess: (_data, vars) => {
-        queryClient.invalidateQueries({ queryKey: productKeys.detail(vars.productId) });
+        queryClient.invalidateQueries({
+          queryKey: productKeys.detail(vars.productId),
+        });
       },
     });
   };
@@ -224,7 +248,8 @@ type MemberListParams = {
 
 export const adminMemberKeys = {
   all: ['admin', 'members'] as const,
-  list: (params: MemberListParams) => [...adminMemberKeys.all, 'list', params] as const,
+  list: (params: MemberListParams) =>
+    [...adminMemberKeys.all, 'list', params] as const,
   detail: (id: number) => [...adminMemberKeys.all, 'detail', id] as const,
 };
 
@@ -259,8 +284,276 @@ export function useAdminMember(id: number): UseQueryResult<MemberAdmin> {
   return useQuery({
     queryKey: adminMemberKeys.detail(id),
     queryFn: () =>
-      apiFetch<MemberAdmin>(`/api/admin/members/${id}`, { authToken: accessToken }),
+      apiFetch<MemberAdmin>(`/api/admin/members/${id}`, {
+        authToken: accessToken,
+      }),
     enabled: !!accessToken && id > 0,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Seller applications
+// ─────────────────────────────────────────────────────────────
+
+type SellerApplicationParams = {
+  status?: SellerApplicationStatus | null;
+};
+
+export const adminSellerApplicationKeys = {
+  all: ['admin', 'seller-applications'] as const,
+  list: (params: SellerApplicationParams) =>
+    [...adminSellerApplicationKeys.all, 'list', params] as const,
+};
+
+export function useAdminSellerApplications(
+  params: SellerApplicationParams = {},
+): UseQueryResult<SellerApplicationAdmin[]> {
+  const accessToken = useToken();
+  const search = new URLSearchParams();
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return useQuery({
+    queryKey: adminSellerApplicationKeys.list(params),
+    queryFn: () =>
+      apiFetch<SellerApplicationAdmin[]>(
+        `/api/admin/seller/applications${query ? `?${query}` : ''}`,
+        { authToken: accessToken },
+      ),
+    enabled: !!accessToken,
+  });
+}
+
+export function useApproveSellerApplication(): UseMutationResult<
+  void,
+  Error,
+  number
+> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (applicationId) =>
+      apiFetch<void>(
+        `/api/admin/seller/applications/${applicationId}/approve`,
+        { method: 'POST', authToken: accessToken },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminSellerApplicationKeys.all,
+      });
+    },
+  });
+}
+
+export function useRejectSellerApplication(): UseMutationResult<
+  void,
+  Error,
+  { applicationId: number; reason: string }
+> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ applicationId, reason }) =>
+      apiFetch<void>(`/api/admin/seller/applications/${applicationId}/reject`, {
+        method: 'POST',
+        body: { reason },
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: adminSellerApplicationKeys.all,
+      });
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Banners
+// ─────────────────────────────────────────────────────────────
+
+type BannerListParams = { status?: BannerStatus | null };
+
+export const adminBannerKeys = {
+  all: ['admin', 'banners'] as const,
+  list: (params: BannerListParams) =>
+    [...adminBannerKeys.all, 'list', params] as const,
+};
+
+export function useAdminBanners(
+  params: BannerListParams = {},
+): UseQueryResult<Banner[]> {
+  const accessToken = useToken();
+  const search = new URLSearchParams();
+  if (params.status) search.set('status', params.status);
+  const query = search.toString();
+  return useQuery({
+    queryKey: adminBannerKeys.list(params),
+    queryFn: () =>
+      apiFetch<Banner[]>(`/api/admin/banners${query ? `?${query}` : ''}`, {
+        authToken: accessToken,
+      }),
+    enabled: !!accessToken,
+  });
+}
+
+export function useCreateBanner(): UseMutationResult<
+  Banner,
+  Error,
+  BannerCreateRequest
+> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input) =>
+      apiFetch<Banner>('/api/admin/banners', {
+        method: 'POST',
+        body: input,
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminBannerKeys.all });
+    },
+  });
+}
+
+type UpdateBannerArgs = { bannerId: number } & BannerUpdateRequest;
+
+export function useUpdateBanner(): UseMutationResult<
+  Banner,
+  Error,
+  UpdateBannerArgs
+> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bannerId, ...body }) =>
+      apiFetch<Banner>(`/api/admin/banners/${bannerId}`, {
+        method: 'PUT',
+        body,
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminBannerKeys.all });
+    },
+  });
+}
+
+export function usePublishBanner(): UseMutationResult<void, Error, number> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bannerId) =>
+      apiFetch<void>(`/api/admin/banners/${bannerId}/publish`, {
+        method: 'PATCH',
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminBannerKeys.all });
+    },
+  });
+}
+
+export function useDeleteBanner(): UseMutationResult<void, Error, number> {
+  const accessToken = useToken();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (bannerId) =>
+      apiFetch<void>(`/api/admin/banners/${bannerId}`, {
+        method: 'DELETE',
+        authToken: accessToken,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminBannerKeys.all });
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Admin — Dashboard
+// ─────────────────────────────────────────────────────────────
+
+type DashboardParams = {
+  startDate: string;
+  endDate: string;
+  unit?: 'DAILY' | 'MONTHLY';
+};
+
+export const adminDashboardKeys = {
+  all: ['admin', 'dashboard'] as const,
+  sales: (params: DashboardParams) =>
+    [...adminDashboardKeys.all, 'sales', params] as const,
+  refunds: (params: DashboardParams) =>
+    [...adminDashboardKeys.all, 'refunds', params] as const,
+  payments: (params: DashboardParams) =>
+    [...adminDashboardKeys.all, 'payments', params] as const,
+  salesStats: (params: DashboardParams) =>
+    [...adminDashboardKeys.all, 'sales-stats', params] as const,
+};
+
+const buildDashboardSearch = (params: DashboardParams) => {
+  const search = new URLSearchParams();
+  search.set('startDate', params.startDate);
+  search.set('endDate', params.endDate);
+  if (params.unit) search.set('unit', params.unit);
+  return search.toString();
+};
+
+export function useAdminSalesTimeSeries(
+  params: DashboardParams,
+): UseQueryResult<SalesTimeSeriesResponse> {
+  const accessToken = useToken();
+  return useQuery({
+    queryKey: adminDashboardKeys.sales(params),
+    queryFn: () =>
+      apiFetch<SalesTimeSeriesResponse>(
+        `/api/admin/dashboard/sales?${buildDashboardSearch(params)}`,
+        { authToken: accessToken },
+      ),
+    enabled: !!accessToken,
+  });
+}
+
+export function useAdminRefundsTimeSeries(
+  params: DashboardParams,
+): UseQueryResult<RefundsTimeSeriesResponse> {
+  const accessToken = useToken();
+  return useQuery({
+    queryKey: adminDashboardKeys.refunds(params),
+    queryFn: () =>
+      apiFetch<RefundsTimeSeriesResponse>(
+        `/api/admin/dashboard/refunds?${buildDashboardSearch(params)}`,
+        { authToken: accessToken },
+      ),
+    enabled: !!accessToken,
+  });
+}
+
+export function useAdminPaymentsTimeSeries(
+  params: DashboardParams,
+): UseQueryResult<PaymentsTimeSeriesResponse> {
+  const accessToken = useToken();
+  return useQuery({
+    queryKey: adminDashboardKeys.payments(params),
+    queryFn: () =>
+      apiFetch<PaymentsTimeSeriesResponse>(
+        `/api/admin/dashboard/payments?${buildDashboardSearch(params)}`,
+        { authToken: accessToken },
+      ),
+    enabled: !!accessToken,
+  });
+}
+
+export function useAdminSalesStats(
+  params: DashboardParams,
+): UseQueryResult<SalesStatsResponse> {
+  const accessToken = useToken();
+  const search = buildDashboardSearch(params);
+  return useQuery({
+    queryKey: adminDashboardKeys.salesStats(params),
+    queryFn: () =>
+      apiFetch<SalesStatsResponse>(`/api/admin/stats/sales?${search}`, {
+        authToken: accessToken,
+      }),
+    enabled: !!accessToken,
   });
 }
 
@@ -282,18 +575,19 @@ export function useDeleteMember(): UseMutationResult<void, Error, number> {
 
 type BlacklistArgs = { memberId: number; blacklisted: boolean };
 
-export function useSetBlacklist(): UseMutationResult<MemberAdmin, Error, BlacklistArgs> {
+export function useSetBlacklist(): UseMutationResult<
+  MemberAdmin,
+  Error,
+  BlacklistArgs
+> {
   const accessToken = useToken();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ memberId, blacklisted }) =>
-      apiFetch<MemberAdmin>(
-        `/api/admin/members/${memberId}/blacklist`,
-        {
-          method: blacklisted ? 'POST' : 'DELETE',
-          authToken: accessToken,
-        },
-      ),
+      apiFetch<MemberAdmin>(`/api/admin/members/${memberId}/blacklist`, {
+        method: blacklisted ? 'POST' : 'DELETE',
+        authToken: accessToken,
+      }),
     onSuccess: (member) => {
       queryClient.setQueryData(adminMemberKeys.detail(member.id), member);
       queryClient.invalidateQueries({ queryKey: adminMemberKeys.all });
@@ -327,9 +621,12 @@ export function useAdminNotifications(
   return useQuery({
     queryKey: adminNotificationKeys.list(params),
     queryFn: () =>
-      apiFetch<PageResponse<Notification>>(`/api/admin/notifications?${search}`, {
-        authToken: accessToken,
-      }),
+      apiFetch<PageResponse<Notification>>(
+        `/api/admin/notifications?${search}`,
+        {
+          authToken: accessToken,
+        },
+      ),
     enabled: !!accessToken,
   });
 }
@@ -347,7 +644,11 @@ export function useAdminUnreadCount(): UseQueryResult<{ count: number }> {
   });
 }
 
-export function useMarkNotificationRead(): UseMutationResult<void, Error, number> {
+export function useMarkNotificationRead(): UseMutationResult<
+  void,
+  Error,
+  number
+> {
   const accessToken = useToken();
   const queryClient = useQueryClient();
   return useMutation({
@@ -362,7 +663,11 @@ export function useMarkNotificationRead(): UseMutationResult<void, Error, number
   });
 }
 
-export function useMarkAllNotificationsRead(): UseMutationResult<void, Error, void> {
+export function useMarkAllNotificationsRead(): UseMutationResult<
+  void,
+  Error,
+  void
+> {
   const accessToken = useToken();
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,23 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useAdminSellers,
-  useSetSellerGrade,
-  useSetSellerStatus,
-} from '@/lib/queries/admin-mock';
+  useAdminSellerApplications,
+  useApproveSellerApplication,
+  useRejectSellerApplication,
+} from '@/lib/queries/admin';
 import type {
-  SellerApplication,
+  SellerApplicationAdmin,
   SellerApplicationStatus,
-  SellerGrade,
 } from '@/types/api';
-
-import { AdminMockNotice } from './admin-mock-notice';
 
 const STATUS_LABEL: Record<SellerApplicationStatus, string> = {
   PENDING: '대기',
@@ -34,10 +33,8 @@ const STATUS_VARIANT: Record<
   REJECTED: 'destructive',
 };
 
-const GRADE_OPTIONS: SellerGrade[] = ['BRONZE', 'SILVER', 'GOLD'];
-
 export function AdminSellersView() {
-  const { data, isLoading } = useAdminSellers();
+  const { data, isLoading } = useAdminSellerApplications();
   if (isLoading) return <Skeleton className="h-64 w-full" />;
   const list = data ?? [];
 
@@ -45,7 +42,6 @@ export function AdminSellersView() {
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-bold">판매자 관리</h1>
-        <AdminMockNotice />
       </header>
 
       <Card>
@@ -54,19 +50,14 @@ export function AdminSellersView() {
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-muted/30 text-left text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2.5">ID</th>
-                  <th className="px-4 py-2.5">브랜드</th>
-                  <th className="px-4 py-2.5">대표자</th>
-                  <th className="px-4 py-2.5">이메일</th>
-                  <th className="px-4 py-2.5">신청일</th>
+                  <th className="px-4 py-2.5">신청 ID</th>
                   <th className="px-4 py-2.5">상태</th>
-                  <th className="px-4 py-2.5">등급</th>
                   <th className="px-4 py-2.5 text-right">액션</th>
                 </tr>
               </thead>
               <tbody>
                 {list.map((seller) => (
-                  <SellerRow key={seller.id} seller={seller} />
+                  <SellerRow key={seller.applicationId} seller={seller} />
                 ))}
               </tbody>
             </table>
@@ -77,25 +68,28 @@ export function AdminSellersView() {
   );
 }
 
-function SellerRow({ seller }: { seller: SellerApplication }) {
-  const statusMutation = useSetSellerStatus();
-  const gradeMutation = useSetSellerGrade();
+function SellerRow({ seller }: { seller: SellerApplicationAdmin }) {
+  const approveMutation = useApproveSellerApplication();
+  const rejectMutation = useRejectSellerApplication();
+  const [reason, setReason] = useState('');
 
-  const changeStatus = (status: SellerApplicationStatus) => {
-    statusMutation.mutate(
-      { id: seller.id, status },
-      {
-        onSuccess: () => toast.success(`상태 → ${STATUS_LABEL[status]}`),
-        onError: (e) => toast.error(`실패: ${e.message}`),
-      },
-    );
+  const handleApprove = () => {
+    approveMutation.mutate(seller.applicationId, {
+      onSuccess: () => toast.success('승인 완료'),
+      onError: (e) => toast.error(`실패: ${e.message}`),
+    });
   };
 
-  const changeGrade = (grade: SellerGrade) => {
-    gradeMutation.mutate(
-      { id: seller.id, grade },
+  const handleReject = () => {
+    const message = reason.trim();
+    if (!message) return;
+    rejectMutation.mutate(
+      { applicationId: seller.applicationId, reason: message },
       {
-        onSuccess: () => toast.success(`등급 → ${grade}`),
+        onSuccess: () => {
+          toast.success('반려 처리됨');
+          setReason('');
+        },
         onError: (e) => toast.error(`실패: ${e.message}`),
       },
     );
@@ -103,36 +97,11 @@ function SellerRow({ seller }: { seller: SellerApplication }) {
 
   return (
     <tr className="border-b border-border last:border-b-0">
-      <td className="px-4 py-3 font-mono text-xs">{seller.id}</td>
-      <td className="px-4 py-3">{seller.brandName}</td>
-      <td className="px-4 py-3">{seller.representativeName}</td>
-      <td className="px-4 py-3 text-muted-foreground">{seller.email}</td>
-      <td className="px-4 py-3 text-xs text-muted-foreground">
-        {new Date(seller.appliedAt).toLocaleDateString('ko-KR')}
-      </td>
+      <td className="px-4 py-3 font-mono text-xs">{seller.applicationId}</td>
       <td className="px-4 py-3">
         <Badge variant={STATUS_VARIANT[seller.status]}>
           {STATUS_LABEL[seller.status]}
         </Badge>
-      </td>
-      <td className="px-4 py-3">
-        {seller.status === 'APPROVED' ? (
-          <select
-            value={seller.grade ?? ''}
-            onChange={(e) => changeGrade(e.target.value as SellerGrade)}
-            disabled={gradeMutation.isPending}
-            className="h-7 rounded border border-input bg-background px-2 text-xs"
-          >
-            <option value="">미지정</option>
-            {GRADE_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <span className="text-xs text-muted-foreground">-</span>
-        )}
       </td>
       <td className="px-4 py-3 text-right">
         <div className="flex justify-end gap-1">
@@ -140,21 +109,29 @@ function SellerRow({ seller }: { seller: SellerApplication }) {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => changeStatus('APPROVED')}
-              disabled={statusMutation.isPending}
+              onClick={handleApprove}
+              disabled={approveMutation.isPending}
             >
               승인
             </Button>
           )}
           {seller.status !== 'REJECTED' && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => changeStatus('REJECTED')}
-              disabled={statusMutation.isPending}
-            >
-              반려
-            </Button>
+            <div className="flex items-center gap-2">
+              <Input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="반려 사유"
+                className="h-7 w-36"
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleReject}
+                disabled={rejectMutation.isPending || !reason.trim()}
+              >
+                반려
+              </Button>
+            </div>
           )}
         </div>
       </td>

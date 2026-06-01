@@ -1,57 +1,64 @@
 'use client';
 
+import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { ComingSoonSection } from '@/components/consumer/coming-soon-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useAdminBanners,
-  useAdminSecurityLogs,
-  useToggleBannerActive,
-} from '@/lib/queries/admin-mock';
-import type { SecurityLogType } from '@/types/api';
-
-import { AdminMockNotice } from './admin-mock-notice';
-
-const LOG_TYPE_LABEL: Record<SecurityLogType, string> = {
-  LOGIN_FAILURE: '로그인 실패',
-  PERMISSION_DENIED: '권한 거부',
-  SUSPICIOUS_REQUEST: '의심 요청',
-};
-
-const LOG_TYPE_VARIANT: Record<SecurityLogType, 'default' | 'destructive'> = {
-  LOGIN_FAILURE: 'destructive',
-  PERMISSION_DENIED: 'destructive',
-  SUSPICIOUS_REQUEST: 'default',
-};
+  useDeleteBanner,
+  usePublishBanner,
+  useUpdateBanner,
+} from '@/lib/queries/admin';
+import type { Banner, BannerStatus } from '@/types/api';
 
 export function AdminContentsView() {
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold">컨텐츠 / 보안 로그</h1>
-        <AdminMockNotice />
       </header>
 
       <BannersSection />
-      <SecurityLogsSection />
+      <ComingSoonSection title="보안 로그" plannedPhase="백엔드 구현 후" />
     </div>
   );
 }
 
 function BannersSection() {
   const { data, isLoading } = useAdminBanners();
-  const toggleMutation = useToggleBannerActive();
+  const publishMutation = usePublishBanner();
+  const deleteMutation = useDeleteBanner();
+  const updateMutation = useUpdateBanner();
 
   if (isLoading) return <Skeleton className="h-32 w-full" />;
   const list = data ?? [];
 
-  const handleToggle = (id: number) => {
-    toggleMutation.mutate(id, {
-      onSuccess: (b) =>
-        toast.success(b.active ? '배너 노출됨' : '배너 숨김 처리'),
+  const handlePublish = (id: number) => {
+    publishMutation.mutate(id, {
+      onSuccess: () => toast.success('배너가 게시되었습니다.'),
+      onError: (e) => toast.error(`실패: ${e.message}`),
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    if (!confirm('배너를 삭제할까요?')) return;
+    deleteMutation.mutate(id, {
+      onSuccess: () => toast.success('배너가 삭제되었습니다.'),
       onError: (e) => toast.error(`실패: ${e.message}`),
     });
   };
@@ -64,32 +71,16 @@ function BannersSection() {
           {list.map((banner) => (
             <li
               key={banner.bannerId}
-              className="flex items-center gap-3 rounded border border-border p-3"
+              className="rounded border border-border p-3"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={banner.imageUrl}
-                alt={banner.title}
-                className="h-12 w-32 rounded object-cover"
-                loading="lazy"
+              <BannerItem
+                banner={banner}
+                onPublish={handlePublish}
+                onDelete={handleDelete}
+                onUpdate={(input) => updateMutation.mutate(input)}
+                isPublishing={publishMutation.isPending}
+                isDeleting={deleteMutation.isPending}
               />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{banner.title}</p>
-                  <Badge variant={banner.active ? 'secondary' : 'default'}>
-                    {banner.active ? '노출' : '숨김'}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{banner.linkUrl}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleToggle(banner.bannerId)}
-                disabled={toggleMutation.isPending}
-              >
-                {banner.active ? '숨김' : '노출'}
-              </Button>
             </li>
           ))}
         </ul>
@@ -98,46 +89,200 @@ function BannersSection() {
   );
 }
 
-function SecurityLogsSection() {
-  const { data, isLoading } = useAdminSecurityLogs();
-  if (isLoading) return <Skeleton className="h-32 w-full" />;
-  const list = data ?? [];
+function BannerItem({
+  banner,
+  onPublish,
+  onDelete,
+  onUpdate,
+  isPublishing,
+  isDeleting,
+}: {
+  banner: Banner;
+  onPublish: (id: number) => void;
+  onDelete: (id: number) => void;
+  onUpdate: (input: {
+    bannerId: number;
+    name: string;
+    imageUrl: string;
+    linkUrl?: string;
+    startAt: string;
+    endAt: string;
+    displayOrder: number;
+  }) => void;
+  isPublishing: boolean;
+  isDeleting: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [formState, setFormState] = useState({
+    name: banner.name,
+    imageUrl: banner.imageUrl,
+    linkUrl: banner.linkUrl,
+    startAt: banner.startAt,
+    endAt: banner.endAt,
+    displayOrder: String(banner.displayOrder),
+  });
+
+  const handleSave = () => {
+    onUpdate({
+      bannerId: banner.bannerId,
+      name: formState.name,
+      imageUrl: formState.imageUrl,
+      linkUrl: formState.linkUrl,
+      startAt: formState.startAt,
+      endAt: formState.endAt,
+      displayOrder: Number(formState.displayOrder),
+    });
+    toast.success('배너가 수정되었습니다.');
+    setOpen(false);
+  };
 
   return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
-        <h2 className="text-base font-semibold">보안 로그</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="py-2">유형</th>
-                <th className="py-2">계정</th>
-                <th className="py-2">IP</th>
-                <th className="py-2">메시지</th>
-                <th className="py-2">발생 시각</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((log) => (
-                <tr key={log.logId} className="border-b border-border last:border-b-0">
-                  <td className="py-2">
-                    <Badge variant={LOG_TYPE_VARIANT[log.type]}>
-                      {LOG_TYPE_LABEL[log.type]}
-                    </Badge>
-                  </td>
-                  <td className="py-2 text-muted-foreground">{log.actorEmail ?? '-'}</td>
-                  <td className="py-2 font-mono text-xs">{log.ipAddress}</td>
-                  <td className="py-2">{log.message}</td>
-                  <td className="py-2 text-xs text-muted-foreground">
-                    {new Date(log.occurredAt).toLocaleString('ko-KR')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={banner.imageUrl}
+          alt={banner.name}
+          className="h-12 w-32 rounded object-cover"
+          loading="lazy"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium">{banner.name}</p>
+            <Badge variant={statusVariant(banner.status)}>
+              {statusLabel(banner.status)}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">{banner.linkUrl}</p>
+          <p className="text-xs text-muted-foreground">
+            {banner.startAt} ~ {banner.endAt}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {banner.status === 'DRAFT' && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onPublish(banner.bannerId)}
+            disabled={isPublishing}
+          >
+            게시
+          </Button>
+        )}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger render={<Button size="sm" variant="outline" />}>
+            수정
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>배너 수정</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label>이름</Label>
+                <Input
+                  value={formState.name}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>이미지 URL</Label>
+                <Input
+                  value={formState.imageUrl}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      imageUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>링크 URL</Label>
+                <Input
+                  value={formState.linkUrl ?? ''}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      linkUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>시작일</Label>
+                <Input
+                  value={formState.startAt}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      startAt: e.target.value,
+                    }))
+                  }
+                  placeholder="2026-06-01T09:00:00"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>종료일</Label>
+                <Input
+                  value={formState.endAt}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      endAt: e.target.value,
+                    }))
+                  }
+                  placeholder="2026-06-30T23:59:59"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>노출 순서</Label>
+                <Input
+                  value={formState.displayOrder}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      displayOrder: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleSave}>저장</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => onDelete(banner.bannerId)}
+          disabled={isDeleting}
+        >
+          삭제
+        </Button>
+      </div>
+    </div>
   );
+}
+
+function statusLabel(status: BannerStatus) {
+  return {
+    DRAFT: '작성중',
+    SCHEDULED: '예약',
+    PUBLISHED: '게시중',
+    EXPIRED: '종료',
+  }[status];
+}
+
+function statusVariant(status: BannerStatus) {
+  if (status === 'PUBLISHED') return 'secondary';
+  if (status === 'EXPIRED') return 'destructive';
+  return 'default';
 }

@@ -2,6 +2,12 @@ import { http, HttpResponse } from 'msw';
 
 import type {
   CreatePurchaseOrderRequest,
+  OrderAdminCancelRequest,
+  OrderAdminCancelResponse,
+  OrderAdminConfirmRequest,
+  OrderAdminConfirmResponse,
+  OrderAdminListItem,
+  OrderAdminStatus,
   PageResponse,
   PurchaseOrderListItem,
   PurchaseOrderStatus,
@@ -13,6 +19,9 @@ import type {
   ReceiveHistory,
   ReceiveStockRequest,
   ReceiveStockResponse,
+  SettlementConfirmRequest,
+  SettlementConfirmResponse,
+  SettlementSummaryResponse,
 } from '@/types/api';
 
 import {
@@ -88,6 +97,58 @@ const seedQuestions: QuestionResponse[] = [
 ];
 
 let sellerQuestions = [...seedQuestions];
+
+let sellerOrders: OrderAdminListItem[] = [
+  {
+    orderId: 9001,
+    orderNumber: 'ORD-20260501-0001',
+    totalAmount: 129000,
+    status: 'PENDING',
+    itemCount: 2,
+    createdAt: '2026-05-30T09:30:00Z',
+  },
+  {
+    orderId: 9002,
+    orderNumber: 'ORD-20260501-0002',
+    totalAmount: 59000,
+    status: 'CONFIRMED',
+    itemCount: 1,
+    createdAt: '2026-05-30T10:10:00Z',
+  },
+  {
+    orderId: 9003,
+    orderNumber: 'ORD-20260501-0003',
+    totalAmount: 99000,
+    status: 'CANCELLED',
+    itemCount: 1,
+    createdAt: '2026-05-30T11:45:00Z',
+  },
+];
+
+const settlementSummary: SettlementSummaryResponse = {
+  totalSalesAmount: 287000,
+  totalFee: 10045,
+  totalSettlementAmount: 276955,
+  feeRate: 0.035,
+  items: [
+    {
+      orderId: 9002,
+      orderNumber: 'ORD-20260501-0002',
+      orderAmount: 59000,
+      fee: 2065,
+      settlementAmount: 56935,
+      confirmedAt: '2026-05-31T10:00:00Z',
+    },
+    {
+      orderId: 9004,
+      orderNumber: 'ORD-20260501-0004',
+      orderAmount: 228000,
+      fee: 7980,
+      settlementAmount: 220020,
+      confirmedAt: '2026-05-31T11:30:00Z',
+    },
+  ],
+};
 
 export const sellerHandlers = [
   http.get('*/api/seller/purchase-orders', ({ request }) => {
@@ -276,5 +337,85 @@ export const sellerHandlers = [
     };
     sellerQuestions = sellerQuestions.map((q) => (q.id === id ? updated : q));
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ─── Seller Orders ────────────────────────────────────────
+  http.get('*/api/seller/orders', ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status') as OrderAdminStatus | null;
+    const page = Number(url.searchParams.get('page') ?? DEFAULT_PAGE);
+    const size = Number(url.searchParams.get('size') ?? DEFAULT_SIZE);
+    const filtered = status
+      ? sellerOrders.filter((order) => order.status === status)
+      : sellerOrders;
+    return HttpResponse.json(buildPage(filtered, page, size));
+  }),
+
+  http.patch('*/api/seller/orders/confirm', async ({ request }) => {
+    const body = (await request.json()) as OrderAdminConfirmRequest;
+    if (!body?.orderIds?.length) {
+      return HttpResponse.json({ error: 'orderIds required' }, { status: 400 });
+    }
+    const confirmedIds: number[] = [];
+    sellerOrders = sellerOrders.map((order) => {
+      if (body.orderIds.includes(order.orderId) && order.status === 'PENDING') {
+        confirmedIds.push(order.orderId);
+        return { ...order, status: 'CONFIRMED' };
+      }
+      return order;
+    });
+    const response: OrderAdminConfirmResponse = {
+      successCount: confirmedIds.length,
+      confirmedOrderIds: confirmedIds,
+    };
+    return HttpResponse.json(response);
+  }),
+
+  http.post(
+    '*/api/seller/orders/:orderId/cancel',
+    async ({ params, request }) => {
+      const body = (await request.json()) as OrderAdminCancelRequest;
+      if (!body?.cancelReason || !body?.cancelReasonCode) {
+        return HttpResponse.json(
+          { error: 'cancelReason required' },
+          { status: 400 },
+        );
+      }
+      const orderId = Number(params.orderId);
+      const target = sellerOrders.find((order) => order.orderId === orderId);
+      if (!target)
+        return HttpResponse.json({ error: 'Order not found' }, { status: 404 });
+      sellerOrders = sellerOrders.map((order) =>
+        order.orderId === orderId ? { ...order, status: 'CANCELLED' } : order,
+      );
+      const response: OrderAdminCancelResponse = {
+        orderId,
+        orderNumber: target.orderNumber,
+        status: 'CANCELLED',
+        cancelReason: body.cancelReason,
+      };
+      return HttpResponse.json(response);
+    },
+  ),
+
+  // ─── Seller Settlements ───────────────────────────────────
+  http.get('*/api/seller/settlements', () => {
+    return HttpResponse.json(settlementSummary);
+  }),
+
+  http.patch('*/api/seller/settlements/confirm', async ({ request }) => {
+    const body = (await request.json()) as SettlementConfirmRequest;
+    if (!body?.settledMonth) {
+      return HttpResponse.json(
+        { error: 'settledMonth required' },
+        { status: 400 },
+      );
+    }
+    const response: SettlementConfirmResponse = {
+      settledMonth: body.settledMonth,
+      confirmedCount: settlementSummary.items.length,
+      totalSettlementAmount: settlementSummary.totalSettlementAmount,
+    };
+    return HttpResponse.json(response);
   }),
 ];
