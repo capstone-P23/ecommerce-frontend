@@ -313,6 +313,16 @@ export type AiChatResponse = {
   followUpQuestions: string[];
 };
 
+/**
+ * Spring 백엔드 AI 응답 envelope.
+ * AI endpoint 는 { status, message, data } 구조로 감싸서 반환.
+ */
+export type AiChatEnvelopeResponse = {
+  status: string;
+  message: string;
+  data: AiChatResponse;
+};
+
 // ─────────────────────────────────────────────────────────────
 // Seller — Orders / Settlements (api-docs.json)
 // ─────────────────────────────────────────────────────────────

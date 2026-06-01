@@ -1,16 +1,5 @@
-import { http, passthrough } from 'msw';
-
 // [AI-001] AI 대화형 추천
-// Next.js API route (/api/ai/chat) 로 실제 OpenAI 호출을 하므로
-// MSW 는 해당 요청을 가로채지 않고 passthrough 한다.
-export const aiHandlers = [
-  // POST /api/ai/chat — Next.js API route 로 통과
-  http.post('*/api/ai/chat', () => {
-    return passthrough();
-  }),
-
-  // GET /api/ai/chat/{sessionId} — Next.js API route 로 통과
-  http.get('*/api/ai/chat/:sessionId', () => {
-    return passthrough();
-  }),
-];
+// 실제 Spring 백엔드 endpoint 가 존재하므로 MSW 핸들러 불필요.
+// Next.js rewrite 프록시를 통해 localhost:8080 으로 직접 전달.
+// onUnhandledRequest: 'bypass' 설정으로 MSW 가 개입하지 않음.
+export const aiHandlers = [];

@@ -3,7 +3,11 @@
 import { useMutation, type UseMutationResult } from '@tanstack/react-query';
 
 import { useAuthStore } from '@/lib/auth/store';
-import type { AiChatRequest, AiChatResponse } from '@/types/api';
+import type {
+  AiChatEnvelopeResponse,
+  AiChatRequest,
+  AiChatResponse,
+} from '@/types/api';
 
 // AI 채팅 queryKey
 export const aiKeys = {
@@ -15,9 +19,11 @@ export const aiKeys = {
 /**
  * AI 채팅 mutation.
  *
- * 프론트 → Next.js API route (/api/ai/chat) → OpenAI.
- * Spring 백엔드를 거치지 않으므로 apiFetch 대신 직접 fetch 사용.
- * MSW 가 가로채지 않도록 절대 경로(/api/ai/chat) 사용.
+ * 프론트 → Next.js rewrite (/api/ai/chat) → Spring 백엔드 → FastAPI → OpenAI.
+ *
+ * apiFetch 는 API_BASE_URL(localhost:8080) 을 직접 붙여 CORS 에러 발생하므로
+ * 상대 경로 fetch 를 사용해 Next.js rewrite 프록시를 거치도록 함.
+ * 백엔드 응답은 { status, message, data } envelope 이라 data 를 unwrap.
  */
 export function useAiChat(): UseMutationResult<
   AiChatResponse,
@@ -38,11 +44,18 @@ export function useAiChat(): UseMutationResult<
       });
 
       if (!res.ok) {
-        const text = await res.text().catch(() => res.statusText);
-        throw new Error(text || `AI 요청 실패 (${res.status})`);
+        let message = res.statusText;
+        try {
+          const text = await res.text();
+          if (text) message = text;
+        } catch {
+          // ignore parse errors
+        }
+        throw new Error(message || `AI 요청 실패 (${res.status})`);
       }
 
-      return res.json() as Promise<AiChatResponse>;
+      const envelope = (await res.json()) as AiChatEnvelopeResponse;
+      return envelope.data;
     },
   });
 }
