@@ -12,5 +12,5 @@ export default async function SellerOrderDetailPage({
 }) {
   const { orderId } = await params;
   if (!orderId) notFound();
-  return <SellerOrderDetailView orderNumber={orderId} />;
+  return <SellerOrderDetailView orderId={orderId} />;
 }
