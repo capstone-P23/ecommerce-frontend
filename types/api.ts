@@ -118,6 +118,7 @@ export type AnswerRequest = {
 export type CartItem = {
   itemId: number;
   productId: number;
+  skuId: number; // ★★★ skuId 필드 추가
   productName: string;
   productImageUrl: string;
   currentPrice: number;

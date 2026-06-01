@@ -13,10 +13,10 @@ import { useEffect, useState, type ReactNode } from 'react';
  * Project → Settings → Environment Variables 에 위 키를 추가.
  */
 const isMockingEnabled =
-  process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' ||
-  (process.env.NODE_ENV === 'development' &&
-    process.env.NEXT_PUBLIC_API_MOCKING !== 'disabled');
-
+  // process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' ||
+  // (process.env.NODE_ENV === 'development' &&
+    // process.env.NEXT_PUBLIC_API_MOCKING !== 'disabled');
+false;
 /**
  * 글로벌 클라이언트 프로바이더.
  *
