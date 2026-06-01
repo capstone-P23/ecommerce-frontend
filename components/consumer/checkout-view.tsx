@@ -22,7 +22,7 @@ const CHECKOUT_FORM_ID = 'checkout-delivery-form';
 
 // TODO: 백엔드가 CartItemResponse 에 skuId 를 제공하면 이 fallback 제거.
 // 현재 mock 컨벤션 (productId * 100 + 1) 과 동일하게 임시 변환.
-const fallbackSkuId = (productId: number) => productId * 100 + 1;
+// const fallbackSkuId = (productId: number) => productId * 100 + 1;
 
 type Props = {
   storeDomain: string;
@@ -53,7 +53,7 @@ export function CheckoutView({ storeDomain }: Props) {
       {
         items: cart.items.map((it) => ({
           productId: it.productId,
-          skuId: fallbackSkuId(it.productId),
+          skuId: it.skuId,
           quantity: it.quantity,
         })),
         delivery,
