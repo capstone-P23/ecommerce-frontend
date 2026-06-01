@@ -313,12 +313,6 @@ export type AiChatResponse = {
   followUpQuestions: string[];
 };
 
-/**
- * Spring 백엔드 AI 응답 envelope.
- * (apiFetch 에서 자동으로 언랩하므로 직접 사용할 일은 적음)
- */
-export type AiChatEnvelopeResponse = CommonResponse<AiChatResponse>;
-
 // ─────────────────────────────────────────────────────────────
 // Seller — Orders / Settlements (api-docs.json)
 // ─────────────────────────────────────────────────────────────
