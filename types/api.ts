@@ -315,13 +315,9 @@ export type AiChatResponse = {
 
 /**
  * Spring 백엔드 AI 응답 envelope.
- * AI endpoint 는 { status, message, data } 구조로 감싸서 반환.
+ * (apiFetch 에서 자동으로 언랩하므로 직접 사용할 일은 적음)
  */
-export type AiChatEnvelopeResponse = {
-  status: string;
-  message: string;
-  data: AiChatResponse;
-};
+export type AiChatEnvelopeResponse = CommonResponse<AiChatResponse>;
 
 // ─────────────────────────────────────────────────────────────
 // Seller — Orders / Settlements (api-docs.json)
@@ -729,6 +725,14 @@ export type SecurityLogType =
   | 'SUSPICIOUS_REQUEST';
 
 export type SecurityLog = {
+  logId: number;
+  type: SecurityLogType;
+  actorEmail?: string;
+  ipAddress: string;
+  message: string;
+  occurredAt: string;
+};
+xport type SecurityLog = {
   logId: number;
   type: SecurityLogType;
   actorEmail?: string;
