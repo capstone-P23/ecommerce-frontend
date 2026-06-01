@@ -732,11 +732,3 @@ export type SecurityLog = {
   message: string;
   occurredAt: string;
 };
-xport type SecurityLog = {
-  logId: number;
-  type: SecurityLogType;
-  actorEmail?: string;
-  ipAddress: string;
-  message: string;
-  occurredAt: string;
-};
