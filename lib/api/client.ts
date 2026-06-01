@@ -55,5 +55,14 @@ export async function apiFetch<T>(
   }
 
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  const envelope = await res.json();
+
+  // 백엔드가 CommonResponse { status, message, data } 구조를 사용하므로
+  // data 필드만 추출하여 반환 (unwrapping).
+  // 에러 발생 시에도 envelope.message 를 우선 사용.
+  if (envelope && typeof envelope === 'object' && 'data' in envelope) {
+    return envelope.data as T;
+  }
+
+  return envelope as T;
 }

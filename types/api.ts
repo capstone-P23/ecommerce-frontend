@@ -293,6 +293,14 @@ export type ReceiveHistory = {
 // AI
 // ─────────────────────────────────────────────────────────────
 
+export type CommonResponse<T> = {
+  status: number;
+  message: string;
+  data: T;
+};
+
+export type AiChatEnvelopeResponse = CommonResponse<AiChatResponse>;
+
 export type AiChatRequest = {
   sessionId: string;
   message: string;
@@ -311,16 +319,6 @@ export type AiChatResponse = {
   answer: string;
   recommendations: AiChatRecommendation[];
   followUpQuestions: string[];
-};
-
-/**
- * Spring 백엔드 AI 응답 envelope.
- * AI endpoint 는 { status, message, data } 구조로 감싸서 반환.
- */
-export type AiChatEnvelopeResponse = {
-  status: string;
-  message: string;
-  data: AiChatResponse;
 };
 
 // ─────────────────────────────────────────────────────────────
