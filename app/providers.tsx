@@ -14,7 +14,8 @@ import { useEffect, useState, type ReactNode } from 'react';
  */
 const isMockingEnabled =
   process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' ||
-  process.env.NODE_ENV === 'development';
+  (process.env.NODE_ENV === 'development' &&
+    process.env.NEXT_PUBLIC_API_MOCKING !== 'disabled');
 
 /**
  * 글로벌 클라이언트 프로바이더.
