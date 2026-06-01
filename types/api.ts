@@ -293,6 +293,14 @@ export type ReceiveHistory = {
 // AI
 // ─────────────────────────────────────────────────────────────
 
+export type CommonResponse<T> = {
+  status: number;
+  message: string;
+  data: T;
+};
+
+export type AiChatEnvelopeResponse = CommonResponse<AiChatResponse>;
+
 export type AiChatRequest = {
   sessionId: string;
   message: string;
