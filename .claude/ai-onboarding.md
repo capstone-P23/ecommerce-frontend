@@ -1,9 +1,7 @@
 # AI 에이전트 진입 가이드
 
-> 이 프로젝트는 여러 Phase 로 나뉘어 진행 중입니다.
-> 새 세션에서 코드를 짜기 전에 다음 순서로 컨텍스트를 회복하세요.
-
----
+- 이 프로젝트는 여러 Phase 로 나뉘어 진행 중입니다.
+- 새 세션에서 코드를 짜기 전에 다음 순서로 컨텍스트를 회복하세요.
 
 ## 📖 첫 5분 — 필수 읽기
 
@@ -21,8 +19,6 @@
 - **`docs/docker-local-dev.md`** — 로컬 BE+DB 띄우는 법
 - **`docs/husky.md`** — 커밋 규약
 
----
-
 ## 🚨 자주 헷갈리는 지뢰 (이 프로젝트 특화)
 
 | 지뢰 | 정답 |
@@ -36,8 +32,6 @@
 | Commit subject 대문자 | **금지** — Conventional Commits + commitlint 가 lowercase 강제 |
 | `feature/* → main` PR | **금지** — 무조건 `dev` 베이스 |
 | Mock handler 의 절대 URL | **`*/api/...` 와일드카드 사용** — 절대/상대 둘 다 매치 |
-
----
 
 ## 🛣️ 워크플로 (변경 ↔ 머지)
 
@@ -71,8 +65,6 @@
    - (자동) PR 코멘트로 preview URL 등록
 ```
 
----
-
 ## 🗂️ 코드 위치 규약
 
 ```
@@ -97,8 +89,6 @@ types/
   api.ts                      # 백엔드 응답 타입 (api-docs.json 미러)
 ```
 
----
-
 ## ⚙️ 코드 작성 전 체크리스트
 
 새 endpoint / 새 페이지 / 새 컴포넌트 작업 전:
@@ -111,8 +101,6 @@ types/
 - [ ] **백엔드 미구현 기능** 은 `<ComingSoonSection />` 또는 disabled UI 로 명시
 - [ ] **인증 필요 endpoint** 는 `useAuthStore` 의 `accessToken` 을 `apiFetch({ authToken })` 로 전달, `enabled: !!accessToken`
 
----
-
 ## 📜 컨벤션 한 줄 요약
 
 - **언어**: 코드는 영어 식별자 / 주석·문서·커밋·UI 는 한국어
@@ -122,8 +110,6 @@ types/
 - **브랜치명**: `feature/* chore/* refactor/* ci/* docs/*` — 머지 후 자동 삭제
 - **PR 본문**: `.github/PULL_REQUEST_TEMPLATE.md` 따름. 백엔드 팀에 공유할 요청은 PR 본문에 정리
 
----
-
 ## 🆘 막혔을 때
 
 | 증상 | 조치 |
@@ -132,15 +118,19 @@ types/
 | Vercel preview "Too many requests" 403 | Hobby 일일 5000 한도 초과. 24h 후 자동 리셋. 머지는 가능 |
 | CodeRabbit "Review skipped (path filters)" | 해당 경로가 `.coderabbit.yaml` 의 path_filters include 에 빠진 것. 필요 시 include 추가 |
 | Login 후 `localhost:3000` 으로 돌아오는데 변화 없음 | 정상 동작 (헤더에 로그인 상태 UI 가 아직 없음). DevTools → Application → localStorage `auth-store` 확인 |
-| `docker compose up` 에서 `MYSQL_ROOT_PASSWORD missing` | `.env` 에 추가 (`MYSQL_ROOT_PASSWORD=root1234`) — BE 가 안 줘서 누락 가능 |
+| `docker compose up` 에서 `MYSQL_ROOT_PASSWORD missing` | `.env` 에 추가 (`MYSQL_ROOT_PASSWORD=root1234`) — BE 가 안 줘서 누락 가능 
 
----
-
-## 📡 백엔드 팀과의 약속 (현재 시점)
+## 📡 백엔드 팀과의 약속
 
 - BE 배포: 로컬 only (`http://localhost:8080`). 공개 URL 없음 → Vercel 배포본에서 OAuth 안 됨
 - OAuth: Google only. 흐름 = `/oauth2/authorization/google` → callback → `/auth/callback#accessToken=`
 - 인증: Bearer JWT. 갱신 `POST /api/auth/refresh`, 로그아웃 `POST /api/auth/logout`
 - 백엔드 Docker 이미지: `kwondh1126/ecommerce-be:latest` (Docker Hub)
 
+## 운영 메모
+
 상세 운영 메모는 `phase-0-to-4-setup.md` / `phase-5-progress.md` 의 "운영 메모" 섹션.
+
+## vercel
+
+vercel 배포는 되어있지만, 로컬로 실행하는 것을 적극 권장. 도커도 실행해야 한다.
