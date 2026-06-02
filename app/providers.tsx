@@ -11,12 +11,10 @@ import { useEffect, useState, type ReactNode } from 'react';
  *
  * Vercel preview 에서 mock 데이터로 데모하려면
  * Project → Settings → Environment Variables 에 위 키를 추가.
+ * 06/01~02 isMockingEnabled = false 처리
  */
-const isMockingEnabled =
-  // process.env.NEXT_PUBLIC_API_MOCKING === 'enabled' ||
-  // (process.env.NODE_ENV === 'development' &&
-    // process.env.NEXT_PUBLIC_API_MOCKING !== 'disabled');
-false;
+const isMockingEnabled = false;
+
 /**
  * 글로벌 클라이언트 프로바이더.
  *
