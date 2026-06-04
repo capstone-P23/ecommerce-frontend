@@ -19,6 +19,7 @@ const buildCartItem = (
 
   return {
     itemId,
+    skuId: product.id * 10, // SKU 는 productId 기반으로 임의 생성
     productId,
     productName: product.name,
     productImageUrl: product.mainImageUrl,
@@ -36,7 +37,9 @@ const initialItems = (
     { itemId: 2, productId: 5, quantity: 1 },
   ] satisfies Array<{ itemId: number; productId: number; quantity: number }>
 )
-  .map(({ itemId, productId, quantity }) => buildCartItem(itemId, productId, quantity))
+  .map(({ itemId, productId, quantity }) =>
+    buildCartItem(itemId, productId, quantity),
+  )
   .filter((x): x is CartItem => x !== null);
 
 // 모듈 mutable 상태 (의도적)
@@ -50,7 +53,10 @@ export const cartState = {
 /** 현재 state 로부터 CartResponse 형태로 빌드 */
 export function snapshotCart(): Cart {
   const totalAmount = cartState.items.reduce((sum, it) => sum + it.subtotal, 0);
-  const totalQuantity = cartState.items.reduce((sum, it) => sum + it.quantity, 0);
+  const totalQuantity = cartState.items.reduce(
+    (sum, it) => sum + it.quantity,
+    0,
+  );
   const currency = cartState.items[0]?.currency ?? 'KRW';
 
   return {
