@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { type FormEvent } from 'react';
 import { Search } from 'lucide-react';
@@ -15,16 +16,6 @@ type Props = {
 
 const KEYWORD_FIELD_NAME = 'keyword';
 
-/**
- * 소비자 영역 상단 GNB. 사이트 전체의 유일한 검색 입력 (single source).
- * - 좌측: 스토어 브랜드
- * - 중앙: 검색바 → submit 시 /consumer/{storeDomain}/products?keyword= 로 이동
- *         URL 의 현재 keyword 를 인식해 input 에 미리 채워줌 (key + defaultValue)
- * - 우측: 장바구니 / 마이페이지 / 로그인
- *
- * Note: <a> 를 <button> 안에 넣는 것은 HTML 비표준이라 Button 컴포넌트 대신
- *       buttonVariants 로 Link 에 스타일만 적용합니다.
- */
 export function TopNavigation({ storeDomain }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,18 +27,29 @@ export function TopNavigation({ storeDomain }: Props) {
     const data = new FormData(e.currentTarget);
     const keyword = String(data.get(KEYWORD_FIELD_NAME) ?? '').trim();
     const base = `/consumer/${storeDomain}/products`;
-    router.push(keyword ? `${base}?keyword=${encodeURIComponent(keyword)}` : base);
+    router.push(
+      keyword ? `${base}?keyword=${encodeURIComponent(keyword)}` : base,
+    );
   };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
-        <Link
-          href={`/consumer/${storeDomain}`}
-          className="text-base font-semibold whitespace-nowrap"
-        >
-          ecommerce
-        </Link>
+        <div className="flex items-center gap-2">
+          <Image
+            src="../curling-stone.svg"
+            alt="Logo"
+            width={32}
+            height={32}
+            className="rounded-sm"
+          />
+          <Link
+            href={`/consumer/${storeDomain}`}
+            className="text-base font-semibold whitespace-nowrap"
+          >
+            ecommerce
+          </Link>
+        </div>
 
         <form
           onSubmit={handleSearchSubmit}
