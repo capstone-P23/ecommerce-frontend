@@ -7,11 +7,10 @@
 
 | | |
 |---|---|
-| Production | https://ecommerce-frontend-six-kohl.vercel.app |
 | Backend image | `kwondh1126/ecommerce-be:latest` (Docker Hub) |
 | OpenAPI 스펙 | `api/api-docs.json` |
 
-> 프로덕션 보다는 로컬에서 진행하는 것을 적극 추천함.
+> 로컬에서 진행하는 것을 적극 추천함.
 
 ## 🧱 기술 스택
 
