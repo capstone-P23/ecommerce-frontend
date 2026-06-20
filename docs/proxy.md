@@ -1,6 +1,6 @@
 ## proxy
 
-각 코드의 간단한 설명을 내포합니다. (실제 코드에서 주석은 제거합니다.)
+루트 경로의 proxy.ts의 각 코드의 간단한 설명을 내포합니다. (실제 코드에서 주석은 제거합니다.)
 
 ```ts
 import { NextResponse, type NextRequest } from 'next/server';
@@ -53,7 +53,8 @@ export function proxy(request: NextRequest) {
   // 그 외 서브도메인 = 스토어 도메인으로 간주
   // localhost / IP / 루트 도메인 직접 접근은 제외
   const isPlainLocalhost = hostname.startsWith('localhost');
-  const isBareDomain = !hostname.includes('.') || hostname.split('.').length < 3;
+  const isBareDomain =
+    !hostname.includes('.') || hostname.split('.').length < 3;
   if (subdomain && !isPlainLocalhost && !isBareDomain) {
     return NextResponse.rewrite(
       new URL(`/consumer/${subdomain}${pathname}`, request.url),
