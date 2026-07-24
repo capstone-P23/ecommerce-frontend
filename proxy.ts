@@ -1,7 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-// 호스트네임 기반 Route Rewrite (Next.js 16 의 proxy = 구 middleware).
-
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get('host') ?? '';
   const { pathname } = request.nextUrl;
