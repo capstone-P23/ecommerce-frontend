@@ -2,11 +2,6 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
-/*
- * 라이트 테마 단일 운영 (테마 토글 없음)
- * - dark 변형 / .dark 블록은 의도적으로 제외함
- */
-
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: var(--font-sans);
